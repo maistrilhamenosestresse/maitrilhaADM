@@ -81,7 +81,8 @@ export default function AgendaList() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {agendas.map((agenda, index) => {
-              const eventDate = new Date(agenda.date);
+              // Corrigir fuso horário para não diminuir 1 dia (-03:00)
+              const eventDate = new Date(agenda.date + 'T12:00:00Z');
               const day = eventDate.toLocaleDateString('pt-BR', { day: '2-digit' });
               const month = eventDate.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase();
               

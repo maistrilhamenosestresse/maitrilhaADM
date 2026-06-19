@@ -1,28 +1,56 @@
-﻿import { GoogleGenAI } from "@google/genai";
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-export async function POST(req: Request) {
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+
+export async function POST(request: Request) {
   try {
-    const { location, date, price, description } = await req.json();
+    const { text, type } = await request.json();
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    const prompt = `Você é um organizador de aventuras da "Mais Trilha Menos Estresse". Crie uma mensagem para o WhatsApp do nosso grupo.
-Informações:
-- Destino: ${location}
-- Data: ${date}
-- Valor: R$ ${price}
-- Detalhes: ${description}
+    if (!text) {
+      return NextResponse.json({ error: 'Texto é obrigatório' }, { status: 400 });
+    }
 
-A mensagem deve ser empolgante, ter emojis de natureza/trilha e usar o formato do WhatsApp (*negrito*). Não inclua o link, apenas diga "Clique no link abaixo para ver o roteiro completo e garantir sua vaga!".`;
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
-    const response = await ai.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-    });
+    let prompt = "";
     
-    return NextResponse.json({ message: response.text });
-  } catch (error) {
-    console.error("Erro na geração:", error);
-    return NextResponse.json({ error: "Erro ao gerar mensagem" }, { status: 500 });
+    if (type === 'meeting_point') {
+      prompt = `
+      Atue como um redator profissional de turismo e aventuras.
+      Você receberá um texto bagunçado sobre os "Pontos de Embarque e Horários".
+      Sua tarefa é:
+      1. Corrigir todos os erros de ortografia e gramática.
+      2. Formatar os pontos de embarque como uma lista vertical bonita e clara, utilizando quebras de linha e emojis apropriados.
+      3. Destacar os horários.
+      4. Manter o tom amigável e claro. Não adicione informações que não estão no texto. Apenas retorne o texto formatado.
+
+      Texto original:
+      "${text}"
+      `;
+    } else {
+      prompt = `
+      Atue como um redator profissional de ecoturismo e trilhas.
+      Você receberá a "Descrição e Recomendações" de uma trilha.
+      Sua tarefa é:
+      1. Corrigir todos os erros de ortografia, pontuação e concordância.
+      2. Formatar o texto para leitura agradável com parágrafos bem espaçados.
+      3. Se houver listas (como o que levar), utilize bullet points ou emojis organizados.
+      4. Apenas retorne o texto melhorado.
+
+      Texto original:
+      "${text}"
+      `;
+    }
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const formattedText = response.text();
+
+    return NextResponse.json({ result: formattedText });
+
+  } catch (error: any) {
+    console.error("Erro na API Gemini:", error);
+    return NextResponse.json({ error: 'Erro ao gerar mensagem', details: error.message }, { status: 500 });
   }
 }

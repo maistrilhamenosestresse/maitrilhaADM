@@ -53,19 +53,44 @@ export default function AgendaDetailsPage() {
     ? agenda.images[currentImageIndex] 
     : "https://images.unsplash.com/photo-1522163182402-834f871fd851?q=80&w=2000&auto=format&fit=crop";
 
-  const eventDate = new Date(agenda.date).toLocaleDateString('pt-BR');
+  const eventDateObj = new Date(agenda.date + 'T12:00:00Z');
+  const eventDate = eventDateObj.toLocaleDateString('pt-BR');
   
   // Link dinâmico formatado com Título e Data
   const whatsappMessage = `Oi, Nívea, eu quero uma vaga para a trilha ${agenda.title} do dia ${eventDate}`;
   const whatsappUrl = `https://wa.me/5531998793939?text=${encodeURIComponent(whatsappMessage)}`;
 
+  // Compartilhamento nativo da Trilha
+  const handleShare = async () => {
+    const shareData = {
+      title: `Trilha: ${agenda.title} | Mais Trilha Menos Estresse`,
+      text: `Olha essa aventura incrível na data ${eventDate} por R$ ${agenda.price}! Vamos nessa?`,
+      url: window.location.href,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(window.location.href);
+        alert("Link da aventura copiado para a área de transferência!");
+      }
+    } catch (err) {
+      console.log('Compartilhamento cancelado ou falhou', err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0F1722] text-white font-sans selection:bg-[#F17B37] selection:text-white pb-32">
       
-      {/* Botão Voltar */}
-      <div className="absolute top-6 left-6 z-30">
+      {/* Header Botões Superiores */}
+      <div className="absolute top-6 left-6 right-6 z-30 flex justify-between">
         <button onClick={() => router.push('/agenda')} className="bg-black/40 backdrop-blur-md p-3 rounded-full border border-white/10 hover:bg-white/10 transition">
           <ChevronLeft className="h-5 w-5" />
+        </button>
+        
+        <button onClick={handleShare} className="bg-[#F17B37]/80 backdrop-blur-md px-4 py-2 rounded-full border border-white/10 hover:bg-[#F17B37] transition flex items-center gap-2 font-bold text-sm shadow-lg">
+          <Send className="h-4 w-4" /> Compartilhar
         </button>
       </div>
 

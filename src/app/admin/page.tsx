@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Calendar, MapPin, DollarSign, FileText, Send, Image as ImageIcon, Video, Loader2, Trash2, CalendarDays, Edit2, X } from "lucide-react";
+import { Calendar, MapPin, DollarSign, FileText, Send, Image as ImageIcon, Video, Loader2, Trash2, CalendarDays, Edit2, Sparkles } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 type AgendaForm = {
@@ -17,11 +17,14 @@ type AgendaForm = {
 };
 
 export default function AdminPage() {
-  const { register, handleSubmit, reset, watch, setValue } = useForm<AgendaForm>();
+  const { register, handleSubmit, reset, watch, setValue, getValues } = useForm<AgendaForm>();
   const [isLoading, setIsLoading] = useState(false);
   const [agendas, setAgendas] = useState<any[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [editingAgenda, setEditingAgenda] = useState<any>(null);
+  
+  const [isFormattingMeetingPoint, setIsFormattingMeetingPoint] = useState(false);
+  const [isFormattingDescription, setIsFormattingDescription] = useState(false);
   
   const selectedImages = watch("images");
   const selectedVideo = watch("video");
@@ -77,7 +80,6 @@ export default function AdminPage() {
     setValue("price", agenda.price.toString().replace('.', ','));
     setValue("meeting_point", agenda.meeting_point);
     setValue("description", agenda.description);
-    // Nota: campos de arquivo (images e video) não podem ser setados programaticamente por segurança do navegador
     
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -87,6 +89,39 @@ export default function AdminPage() {
     reset();
   };
 
+  // Função para chamar a IA
+  const formatTextWithAI = async (type: 'meeting_point' | 'description') => {
+    const text = getValues(type);
+    if (!text || text.trim().length < 5) {
+      alert("Escreva um pouco de texto primeiro antes de usar a IA.");
+      return;
+    }
+
+    if (type === 'meeting_point') setIsFormattingMeetingPoint(true);
+    else setIsFormattingDescription(true);
+
+    try {
+      const res = await fetch("/api/generate-message", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, type })
+      });
+      const data = await res.json();
+      
+      if (data.result) {
+        setValue(type, data.result);
+      } else {
+        alert("Erro na resposta da IA.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Falha de conexão com a IA.");
+    } finally {
+      if (type === 'meeting_point') setIsFormattingMeetingPoint(false);
+      else setIsFormattingDescription(false);
+    }
+  };
+
   const onSubmit = async (data: AgendaForm) => {
     setIsLoading(true);
     
@@ -94,9 +129,8 @@ export default function AdminPage() {
       let imageUrls: string[] = editingAgenda ? editingAgenda.images || [] : [];
       let videoUrl: string | null = editingAgenda ? editingAgenda.video_url : null;
       
-      // Upload de Novas Imagens (substitui se enviar novas)
       if (data.images && data.images.length > 0) {
-        imageUrls = []; // Limpa as velhas se enviou novas
+        imageUrls = [];
         for (let i = 0; i < data.images.length; i++) {
           const file = data.images[i];
           const fileExt = file.name.split('.').pop();
@@ -110,7 +144,6 @@ export default function AdminPage() {
         }
       }
 
-      // Upload de Novo Vídeo (substitui se enviar novo)
       if (data.video && data.video.length > 0) {
         const file = data.video[0];
         const fileExt = file.name.split('.').pop();
@@ -134,21 +167,12 @@ export default function AdminPage() {
       };
 
       if (editingAgenda) {
-        // Atualizar
-        const { error: updateError } = await supabase
-          .from('agendas')
-          .update(payload)
-          .eq('id', editingAgenda.id);
-          
+        const { error: updateError } = await supabase.from('agendas').update(payload).eq('id', editingAgenda.id);
         if (updateError) throw updateError;
         alert("Trilha atualizada com sucesso!");
         cancelEdit();
       } else {
-        // Inserir Novo
-        const { error: insertError } = await supabase
-          .from('agendas')
-          .insert([payload]);
-
+        const { error: insertError } = await supabase.from('agendas').insert([payload]);
         if (insertError) throw insertError;
         alert("Trilha cadastrada com sucesso!");
         reset();
@@ -167,13 +191,19 @@ export default function AdminPage() {
   const whatsappMessage = `⛰️ A nossa agenda oficial chegou! Prepare as botas!\n\nClique no link abaixo para conferir as nossas próximas trilhas, ver as fotos, roteiros e garantir sua vaga:\n\n👉 ${globalSiteUrl}`;
   const whatsappLink = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
 
+  // Função helper para exibir datas perfeitamente sem problema de fuso horário
+  const formatDateDisplay = (dateString: string) => {
+    const [year, month, day] = dateString.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-12 text-gray-900">
       <div className="max-w-6xl mx-auto space-y-8">
         
         <header className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Painel da Administradora</h1>
-          <p className="text-gray-500">Cadastre, gerencie as trilhas e envie o calendário atualizado.</p>
+          <p className="text-gray-500">Cadastre, gerencie as trilhas e use a IA para formatar seus textos.</p>
         </header>
 
         <div className="grid lg:grid-cols-[1fr_400px] gap-8">
@@ -226,39 +256,55 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Ponto de Encontro e Horário</label>
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-bold text-gray-800">Pontos de Encontro e Horários</label>
+                  <button 
+                    type="button" 
+                    onClick={() => formatTextWithAI('meeting_point')}
+                    disabled={isFormattingMeetingPoint}
+                    className="text-xs bg-white border border-blue-200 text-blue-700 px-3 py-1.5 rounded-full font-bold hover:bg-blue-100 transition flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {isFormattingMeetingPoint ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3 text-blue-500" />}
+                    {isFormattingMeetingPoint ? 'Formatando...' : 'Formatar com IA'}
+                  </button>
+                </div>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-                  <input 
+                  <textarea 
                     {...register("meeting_point", { required: true })}
-                    className="pl-10 w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none" 
-                    placeholder="Ex: Praça da Liberdade às 06:00" 
+                    rows={4}
+                    className="pl-10 w-full p-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none resize-none" 
+                    placeholder="Cole os horários bagunçados aqui e clique no botão mágico acima..." 
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium mb-1">Descrição e Recomendações</label>
+              <div className="bg-gradient-to-r from-purple-50 to-pink-50 p-4 rounded-xl border border-purple-100">
+                <div className="flex items-center justify-between mb-2">
+                  <label className="text-sm font-bold text-gray-800">Descrição e Recomendações</label>
+                  <button 
+                    type="button" 
+                    onClick={() => formatTextWithAI('description')}
+                    disabled={isFormattingDescription}
+                    className="text-xs bg-white border border-purple-200 text-purple-700 px-3 py-1.5 rounded-full font-bold hover:bg-purple-100 transition flex items-center gap-1.5 disabled:opacity-50"
+                  >
+                    {isFormattingDescription ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3 text-purple-500" />}
+                    {isFormattingDescription ? 'Revisando...' : 'Revisar Ortografia com IA'}
+                  </button>
+                </div>
                 <div className="relative">
                   <FileText className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
                   <textarea 
                     {...register("description", { required: true })}
-                    rows={4}
-                    className="pl-10 w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 outline-none resize-none" 
-                    placeholder="Detalhes sobre a trilha, o que levar..." 
+                    rows={6}
+                    className="pl-10 w-full p-2.5 bg-white border border-gray-200 rounded-xl focus:ring-2 focus:ring-purple-500 outline-none resize-none" 
+                    placeholder="Escreva a descrição e clique no botão acima para corrigir os erros..." 
                   />
                 </div>
               </div>
 
-              {editingAgenda && (
-                <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl text-sm text-blue-800">
-                  <strong>Dica de Edição:</strong> Se você não selecionar novas fotos ou vídeos abaixo, os antigos serão mantidos automaticamente.
-                </div>
-              )}
-
-              <div className="grid grid-cols-2 gap-4">
-                {/* Upload Fotos */}
+              <div className="grid grid-cols-2 gap-4 pt-2">
                 <div className="border-2 border-dashed border-orange-200 bg-orange-50/50 rounded-xl p-4 text-center hover:bg-orange-50 transition relative">
                   <ImageIcon className="mx-auto h-6 w-6 text-orange-400 mb-2" />
                   <p className="text-sm text-gray-700 font-medium">{editingAgenda ? 'Substituir Fotos' : 'Fotos'}</p>
@@ -274,7 +320,6 @@ export default function AdminPage() {
                   />
                 </div>
 
-                {/* Upload Vídeo */}
                 <div className="border-2 border-dashed border-blue-200 bg-blue-50/50 rounded-xl p-4 text-center hover:bg-blue-50 transition relative">
                   <Video className="mx-auto h-6 w-6 text-blue-400 mb-2" />
                   <p className="text-sm text-gray-700 font-medium">{editingAgenda ? 'Substituir Vídeo' : '1 Vídeo (Opcional)'}</p>
@@ -356,7 +401,7 @@ export default function AdminPage() {
                     <div key={agenda.id} className={`flex items-center justify-between p-3 bg-gray-50 border rounded-xl hover:border-gray-200 transition ${editingAgenda?.id === agenda.id ? 'border-orange-500 bg-orange-50/30' : 'border-gray-100'}`}>
                       <div className="truncate pr-2">
                         <p className="text-sm font-bold text-gray-800 truncate">{agenda.title}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{new Date(agenda.date).toLocaleDateString('pt-BR')} • R$ {agenda.price}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{formatDateDisplay(agenda.date)} • R$ {agenda.price}</p>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         <button 
