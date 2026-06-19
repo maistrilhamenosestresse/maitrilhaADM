@@ -99,74 +99,72 @@ export default function AdminPage() {
     reset();
   };
 
-  // Funções de Áudio com correção de MIME Type para iOS/Safari
   const startRecording = async (type: 'meeting_point' | 'description') => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Usar a API Nativa de Reconhecimento de Voz do Celular/Navegador
+      const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
       
-      let options = {};
-      if (MediaRecorder.isTypeSupported('audio/webm')) {
-        options = { mimeType: 'audio/webm' };
-      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-        options = { mimeType: 'audio/mp4' };
+      if (!SpeechRecognition) {
+        alert("Seu navegador não suporta digitação por voz nativa. Tente usar o Google Chrome ou Safari.");
+        return;
       }
-      
-      const mediaRecorder = new MediaRecorder(stream, options);
-      mediaRecorderRef.current = mediaRecorder;
-      audioChunksRef.current = [];
 
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) audioChunksRef.current.push(event.data);
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'pt-BR';
+      recognition.continuous = true;
+      recognition.interimResults = true;
+
+      // Guarda o texto inicial caso o usuário já tenha digitado algo
+      const initialText = getValues(type) || "";
+      let finalTranscript = "";
+
+      recognition.onstart = () => {
+        setRecordingType(type);
+        setRecordingTime(0);
+        timerRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
       };
 
-      mediaRecorder.onstop = async () => {
-        let actualMimeType = mediaRecorder.mimeType;
-        
-        // Se o navegador não definiu ou usar video/mp4 (erro comum no iOS), a gente força pra áudio
-        if (!actualMimeType || actualMimeType === '') {
-          actualMimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+      recognition.onresult = (event: any) => {
+        let interimTranscript = "";
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript + " ";
+          } else {
+            interimTranscript += event.results[i][0].transcript;
+          }
         }
-        if (actualMimeType.includes('video/')) {
-          actualMimeType = actualMimeType.replace('video/', 'audio/');
-        }
-
-        const audioBlob = new Blob(audioChunksRef.current, { type: actualMimeType });
-        
-        if (audioBlob.size === 0) {
-          alert("Nenhum áudio foi gravado. Verifique seu microfone.");
-          stream.getTracks().forEach(track => track.stop());
-          return;
-        }
-
-        // Converter Blob para Base64
-        const reader = new FileReader();
-        reader.readAsDataURL(audioBlob);
-        reader.onloadend = async () => {
-          const base64data = (reader.result as string).split(',')[1];
-          await processAudioWithAI(base64data, type, actualMimeType);
-        };
-
-        // Limpar recursos do microfone
-        stream.getTracks().forEach(track => track.stop());
+        // Atualiza a tela em tempo real com o que ele está falando
+        setValue(type, initialText + (initialText ? "\n" : "") + finalTranscript + interimTranscript);
       };
 
-      mediaRecorder.start();
-      setRecordingType(type);
-      setRecordingTime(0);
-      
-      timerRef.current = setInterval(() => {
-        setRecordingTime(prev => prev + 1);
-      }, 1000);
+      recognition.onerror = (event: any) => {
+        console.error("Erro no reconhecimento de voz:", event.error);
+        if (event.error !== 'aborted') {
+          alert("Erro ao captar a voz: " + event.error);
+        }
+        stopRecording();
+      };
+
+      recognition.onend = () => {
+        // Quando parar de ouvir, aciona a IA automaticamente para formatar o texto!
+        stopRecording();
+        formatTextWithAI(type);
+      };
+
+      // Guardar a referência para poder parar manualmente
+      (window as any).currentRecognition = recognition;
+      recognition.start();
 
     } catch (err) {
-      console.error("Erro ao acessar microfone", err);
+      console.error("Erro ao iniciar microfone", err);
       alert("Não foi possível acessar o microfone. Verifique se o seu navegador tem permissão.");
     }
   };
 
   const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
+    if ((window as any).currentRecognition) {
+      (window as any).currentRecognition.stop();
+      (window as any).currentRecognition = null;
     }
     setRecordingType(null);
     if (timerRef.current) clearInterval(timerRef.current);
