@@ -11,16 +11,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Texto ou Áudio é obrigatório' }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" }); // Usando 1.5-flash pois é muito bom para áudio também
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     let prompt = "";
     
     if (type === 'meeting_point') {
       prompt = `
       Atue como um redator profissional de turismo e aventuras.
-      Você receberá um texto bagunçado ou um ÁUDIO com os "Pontos de Embarque e Horários".
+      Você receberá um texto dditado ou copiado com os "Pontos de Embarque e Horários".
       Sua tarefa é:
-      1. Ouvir/Ler atentamente.
+      1. Ler atentamente.
       2. Corrigir todos os erros de ortografia e gramática.
       3. Formatar os pontos de embarque como uma lista vertical bonita e clara, utilizando quebras de linha e emojis apropriados.
       4. Destacar os horários.
@@ -29,9 +29,9 @@ export async function POST(request: Request) {
     } else {
       prompt = `
       Atue como um redator profissional de ecoturismo e trilhas.
-      Você receberá a "Descrição e Recomendações" de uma trilha em texto ou ÁUDIO.
+      Você receberá a "Descrição e Recomendações" de uma trilha em texto ditado.
       Sua tarefa é:
-      1. Ouvir/Ler atentamente.
+      1. Ler atentamente.
       2. Transcrever e corrigir todos os erros de ortografia e pontuação.
       3. Formatar o texto para leitura agradável com parágrafos.
       4. Utilizar bullet points ou emojis organizados se houver listas de recomendações.
@@ -39,22 +39,9 @@ export async function POST(request: Request) {
       `;
     }
 
-    let result;
-    
-    if (audioBase64) {
-      // Processar Áudio
-      const audioPart = {
-        inlineData: {
-          data: audioBase64,
-          mimeType: mimeType || "audio/mp3",
-        },
-      };
-      result = await model.generateContent([prompt, audioPart]);
-    } else {
-      // Processar Texto
-      prompt += `\n\nTexto original:\n"${text}"`;
-      result = await model.generateContent(prompt);
-    }
+    // Processar Texto
+    prompt += `\n\nTexto original:\n"${text}"`;
+    const result = await model.generateContent(prompt);
 
     const response = await result.response;
     const formattedText = response.text();
