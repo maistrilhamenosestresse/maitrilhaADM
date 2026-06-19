@@ -18,29 +18,37 @@ export async function POST(request: Request) {
     if (type === 'meeting_point') {
       prompt = `
       Atue como um redator profissional de turismo e aventuras.
-      Você receberá um texto dditado ou copiado com os "Pontos de Embarque e Horários".
-      Sua tarefa é:
-      1. Ler atentamente.
-      2. Corrigir todos os erros de ortografia e gramática.
-      3. Formatar os pontos de embarque como uma lista vertical bonita e clara, utilizando quebras de linha e emojis apropriados.
-      4. Destacar os horários.
-      5. Apenas retorne o texto formatado. Não converse comigo.
+      Você receberá uma transcrição bruta de voz com os "Pontos de Embarque e Horários".
+      Sua tarefa é extrair APENAS as informações úteis e ignorar falas aleatórias, vícios de linguagem ou interrupções.
+
+      REGRAS DE FORMATAÇÃO (MUITO IMPORTANTE):
+      1. NÃO use formatação Markdown (como **asteriscos** ou # hashtags).
+      2. Para destacar palavras importantes, use CAIXA ALTA (letras maiúsculas). Exemplo: SHOPPING ESTAÇÃO.
+      3. Não use código HTML. Apenas texto puro.
+      4. Formate como uma lista vertical clara, usando quebras de linha reais.
+      5. Coloque um emoji de pin (📍) antes do local e um emoji de relógio (⏰) antes do horário.
+      
+      Apenas retorne o texto final formatado, sem introduções ou conclusões.
       `;
     } else {
       prompt = `
       Atue como um redator profissional de ecoturismo e trilhas.
-      Você receberá a "Descrição e Recomendações" de uma trilha em texto ditado.
-      Sua tarefa é:
-      1. Ler atentamente.
-      2. Transcrever e corrigir todos os erros de ortografia e pontuação.
-      3. Formatar o texto para leitura agradável com parágrafos.
-      4. Utilizar bullet points ou emojis organizados se houver listas de recomendações.
-      5. Apenas retorne o texto formatado. Não converse comigo.
+      Você receberá uma transcrição bruta de voz com a "Descrição, Roteiro e Recomendações" de uma trilha.
+      Sua tarefa é extrair APENAS as informações úteis (roteiro, o que levar, dicas) e ignorar falas aleatórias, vícios de linguagem ou interrupções.
+
+      REGRAS DE FORMATAÇÃO (MUITO IMPORTANTE):
+      1. NÃO use formatação Markdown (como **asteriscos** ou # hashtags).
+      2. Para destacar palavras, alertas ou subtítulos importantes, use CAIXA ALTA (letras maiúsculas).
+      3. Não use código HTML. O texto deve ser texto puro.
+      4. Separe os assuntos usando parágrafos bem espaçados (quebra de linha dupla).
+      5. Se houver itens soltos (como coisas inclusas ou o que levar), crie uma lista usando emojis relevantes (🎒, 🥾, 🥪) ou um simples traço (-), mas NUNCA use asteriscos para listas.
+      
+      Apenas retorne o texto final formatado, pronto para ser lido no site, sem introduções ou conversas.
       `;
     }
 
     // Processar Texto
-    prompt += `\n\nTexto original:\n"${text}"`;
+    prompt += `\n\n=== TRANSCRIÇÃO DE VOZ ===\n"${text}"\n===========================`;
     const result = await model.generateContent(prompt);
 
     const response = await result.response;
