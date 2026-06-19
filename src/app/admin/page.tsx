@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Calendar, MapPin, DollarSign, FileText, Send, Image as ImageIcon, Video, Loader2, Trash2, CalendarDays } from "lucide-react";
+import { Calendar, MapPin, DollarSign, FileText, Send, Image as ImageIcon, Video, Loader2, Trash2, CalendarDays, Edit2, X } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 type AgendaForm = {
@@ -17,10 +17,11 @@ type AgendaForm = {
 };
 
 export default function AdminPage() {
-  const { register, handleSubmit, reset, watch } = useForm<AgendaForm>();
+  const { register, handleSubmit, reset, watch, setValue } = useForm<AgendaForm>();
   const [isLoading, setIsLoading] = useState(false);
   const [agendas, setAgendas] = useState<any[]>([]);
   const [isFetching, setIsFetching] = useState(true);
+  const [editingAgenda, setEditingAgenda] = useState<any>(null);
   
   const selectedImages = watch("images");
   const selectedVideo = watch("video");
@@ -58,21 +59,44 @@ export default function AdminPage() {
     try {
       const { error } = await supabase.from('agendas').delete().eq('id', id);
       if (error) throw error;
+      
+      if (editingAgenda?.id === id) {
+        cancelEdit();
+      }
+      
       fetchAgendasAndCleanup();
     } catch (error: any) {
       alert("Erro ao excluir trilha: " + error.message);
     }
   };
 
+  const handleEdit = (agenda: any) => {
+    setEditingAgenda(agenda);
+    setValue("title", agenda.title);
+    setValue("date", agenda.date);
+    setValue("price", agenda.price.toString().replace('.', ','));
+    setValue("meeting_point", agenda.meeting_point);
+    setValue("description", agenda.description);
+    // Nota: campos de arquivo (images e video) não podem ser setados programaticamente por segurança do navegador
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const cancelEdit = () => {
+    setEditingAgenda(null);
+    reset();
+  };
+
   const onSubmit = async (data: AgendaForm) => {
     setIsLoading(true);
     
     try {
-      const imageUrls: string[] = [];
-      let videoUrl: string | null = null;
+      let imageUrls: string[] = editingAgenda ? editingAgenda.images || [] : [];
+      let videoUrl: string | null = editingAgenda ? editingAgenda.video_url : null;
       
-      // Upload de Imagens
+      // Upload de Novas Imagens (substitui se enviar novas)
       if (data.images && data.images.length > 0) {
+        imageUrls = []; // Limpa as velhas se enviou novas
         for (let i = 0; i < data.images.length; i++) {
           const file = data.images[i];
           const fileExt = file.name.split('.').pop();
@@ -86,7 +110,7 @@ export default function AdminPage() {
         }
       }
 
-      // Upload do Vídeo (separado)
+      // Upload de Novo Vídeo (substitui se enviar novo)
       if (data.video && data.video.length > 0) {
         const file = data.video[0];
         const fileExt = file.name.split('.').pop();
@@ -99,24 +123,37 @@ export default function AdminPage() {
         videoUrl = publicUrlData.publicUrl;
       }
 
-      const { error: dbError } = await supabase
-        .from('agendas')
-        .insert([
-          {
-            title: data.title,
-            date: data.date,
-            price: parseFloat(data.price.replace(',', '.')),
-            description: data.description,
-            meeting_point: data.meeting_point,
-            images: imageUrls,
-            video_url: videoUrl
-          }
-        ]);
+      const payload = {
+        title: data.title,
+        date: data.date,
+        price: parseFloat(data.price.replace(',', '.')),
+        description: data.description,
+        meeting_point: data.meeting_point,
+        images: imageUrls,
+        video_url: videoUrl
+      };
 
-      if (dbError) throw dbError;
+      if (editingAgenda) {
+        // Atualizar
+        const { error: updateError } = await supabase
+          .from('agendas')
+          .update(payload)
+          .eq('id', editingAgenda.id);
+          
+        if (updateError) throw updateError;
+        alert("Trilha atualizada com sucesso!");
+        cancelEdit();
+      } else {
+        // Inserir Novo
+        const { error: insertError } = await supabase
+          .from('agendas')
+          .insert([payload]);
+
+        if (insertError) throw insertError;
+        alert("Trilha cadastrada com sucesso!");
+        reset();
+      }
       
-      alert("Trilha cadastrada com sucesso!");
-      reset();
       fetchAgendasAndCleanup();
     } catch (error: any) {
       console.error("Erro completo:", error);
@@ -141,11 +178,17 @@ export default function AdminPage() {
 
         <div className="grid lg:grid-cols-[1fr_400px] gap-8">
           
-          <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
-              <CalendarDays className="h-5 w-5 text-orange-500" /> 
-              Nova Trilha
-            </h2>
+          <div className={`bg-white p-6 rounded-2xl shadow-sm border transition-all ${editingAgenda ? 'border-orange-500 ring-4 ring-orange-500/10' : 'border-gray-100'}`}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                <CalendarDays className={`h-5 w-5 ${editingAgenda ? 'text-orange-600' : 'text-orange-500'}`} /> 
+                {editingAgenda ? 'Editando Trilha' : 'Nova Trilha'}
+              </h2>
+              {editingAgenda && (
+                <span className="bg-orange-100 text-orange-700 text-xs px-2 py-1 rounded-full font-bold animate-pulse">Modo de Edição</span>
+              )}
+            </div>
+            
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               
               <div>
@@ -208,11 +251,17 @@ export default function AdminPage() {
                 </div>
               </div>
 
+              {editingAgenda && (
+                <div className="bg-blue-50 border border-blue-100 p-3 rounded-xl text-sm text-blue-800">
+                  <strong>Dica de Edição:</strong> Se você não selecionar novas fotos ou vídeos abaixo, os antigos serão mantidos automaticamente.
+                </div>
+              )}
+
               <div className="grid grid-cols-2 gap-4">
                 {/* Upload Fotos */}
                 <div className="border-2 border-dashed border-orange-200 bg-orange-50/50 rounded-xl p-4 text-center hover:bg-orange-50 transition relative">
                   <ImageIcon className="mx-auto h-6 w-6 text-orange-400 mb-2" />
-                  <p className="text-sm text-gray-700 font-medium">Fotos</p>
+                  <p className="text-sm text-gray-700 font-medium">{editingAgenda ? 'Substituir Fotos' : 'Fotos'}</p>
                   <p className="text-xs font-bold text-orange-600 mt-1">
                     {selectedImages && selectedImages.length > 0 ? `${selectedImages.length} selecionada(s)` : 'Selecionar'}
                   </p>
@@ -228,7 +277,7 @@ export default function AdminPage() {
                 {/* Upload Vídeo */}
                 <div className="border-2 border-dashed border-blue-200 bg-blue-50/50 rounded-xl p-4 text-center hover:bg-blue-50 transition relative">
                   <Video className="mx-auto h-6 w-6 text-blue-400 mb-2" />
-                  <p className="text-sm text-gray-700 font-medium">1 Vídeo (Opcional)</p>
+                  <p className="text-sm text-gray-700 font-medium">{editingAgenda ? 'Substituir Vídeo' : '1 Vídeo (Opcional)'}</p>
                   <p className="text-xs font-bold text-blue-600 mt-1">
                     {selectedVideo && selectedVideo.length > 0 ? `Vídeo pronto` : 'Selecionar'}
                   </p>
@@ -241,17 +290,30 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <button 
-                type="submit" 
-                disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 bg-[#1D2A3A] text-white p-4 rounded-xl font-medium hover:bg-gray-800 transition disabled:opacity-70 shadow-lg mt-2"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-5 w-5 animate-spin" />
-                ) : (
-                  <>Cadastrar Trilha na Agenda</>
+              <div className="flex gap-3 pt-2">
+                <button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="flex-1 flex items-center justify-center gap-2 bg-[#1D2A3A] text-white p-4 rounded-xl font-medium hover:bg-gray-800 transition disabled:opacity-70 shadow-lg"
+                >
+                  {isLoading ? (
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                  ) : (
+                    <>{editingAgenda ? 'Salvar Alterações' : 'Cadastrar Trilha na Agenda'}</>
+                  )}
+                </button>
+                
+                {editingAgenda && (
+                  <button 
+                    type="button" 
+                    onClick={cancelEdit}
+                    disabled={isLoading}
+                    className="flex-none px-6 flex items-center justify-center gap-2 bg-gray-200 text-gray-700 rounded-xl font-medium hover:bg-gray-300 transition"
+                  >
+                    Cancelar
+                  </button>
                 )}
-              </button>
+              </div>
 
             </form>
           </div>
@@ -291,18 +353,27 @@ export default function AdminPage() {
                   <p className="text-sm text-gray-400 text-center py-4">Nenhuma trilha futura cadastrada.</p>
                 ) : (
                   agendas.map((agenda) => (
-                    <div key={agenda.id} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-xl hover:border-gray-200 transition">
-                      <div className="truncate pr-4">
+                    <div key={agenda.id} className={`flex items-center justify-between p-3 bg-gray-50 border rounded-xl hover:border-gray-200 transition ${editingAgenda?.id === agenda.id ? 'border-orange-500 bg-orange-50/30' : 'border-gray-100'}`}>
+                      <div className="truncate pr-2">
                         <p className="text-sm font-bold text-gray-800 truncate">{agenda.title}</p>
                         <p className="text-xs text-gray-500 mt-0.5">{new Date(agenda.date).toLocaleDateString('pt-BR')} • R$ {agenda.price}</p>
                       </div>
-                      <button 
-                        onClick={() => deleteAgenda(agenda.id)}
-                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0"
-                        title="Excluir Trilha"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <div className="flex items-center gap-1 shrink-0">
+                        <button 
+                          onClick={() => handleEdit(agenda)}
+                          className={`p-2 rounded-lg transition ${editingAgenda?.id === agenda.id ? 'text-orange-600 bg-orange-100' : 'text-gray-400 hover:text-orange-500 hover:bg-orange-50'}`}
+                          title="Editar Trilha"
+                        >
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button 
+                          onClick={() => deleteAgenda(agenda.id)}
+                          className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                          title="Excluir Trilha"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
