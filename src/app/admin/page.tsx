@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Calendar, MapPin, DollarSign, FileText, Send, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Calendar, MapPin, DollarSign, FileText, Send, Image as ImageIcon, Loader2, Trash2, CalendarDays } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 type AgendaForm = {
@@ -18,15 +18,56 @@ type AgendaForm = {
 export default function AdminPage() {
   const { register, handleSubmit, reset, watch } = useForm<AgendaForm>();
   const [isLoading, setIsLoading] = useState(false);
-  const [whatsappLink, setWhatsappLink] = useState("");
+  const [agendas, setAgendas] = useState<any[]>([]);
+  const [isFetching, setIsFetching] = useState(true);
   
   const selectedFiles = watch("images");
+
+  // Busca as agendas e faz a limpeza automática
+  const fetchAgendasAndCleanup = async () => {
+    setIsFetching(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+
+      // 1. Apaga as que já passaram
+      await supabase
+        .from('agendas')
+        .delete()
+        .lt('date', today);
+
+      // 2. Busca as válidas
+      const { data, error } = await supabase
+        .from('agendas')
+        .select('*')
+        .order('date', { ascending: true });
+
+      if (error) throw error;
+      setAgendas(data || []);
+    } catch (error) {
+      console.error("Erro ao buscar agendas:", error);
+    } finally {
+      setIsFetching(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAgendasAndCleanup();
+  }, []);
+
+  const deleteAgenda = async (id: string) => {
+    if (!window.confirm("Tem certeza que deseja excluir esta trilha?")) return;
+    try {
+      await supabase.from('agendas').delete().eq('id', id);
+      fetchAgendasAndCleanup();
+    } catch (error) {
+      alert("Erro ao excluir trilha.");
+    }
+  };
 
   const onSubmit = async (data: AgendaForm) => {
     setIsLoading(true);
     
     try {
-      // 1. Fazer upload das imagens para o Supabase Storage
       const imageUrls: string[] = [];
       
       if (data.images && data.images.length > 0) {
@@ -36,13 +77,12 @@ export default function AdminPage() {
           const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
           const filePath = `${fileName}`;
 
-          const { error: uploadError, data: uploadData } = await supabase.storage
+          const { error: uploadError } = await supabase.storage
             .from('fotos_agendas')
             .upload(filePath, file);
 
           if (uploadError) throw uploadError;
 
-          // Pegar URL pública da imagem
           const { data: publicUrlData } = supabase.storage
             .from('fotos_agendas')
             .getPublicUrl(filePath);
@@ -51,8 +91,7 @@ export default function AdminPage() {
         }
       }
 
-      // 2. Salvar os dados da agenda no Banco de Dados Supabase
-      const { data: agendaData, error: dbError } = await supabase
+      const { error: dbError } = await supabase
         .from('agendas')
         .insert([
           {
@@ -63,41 +102,43 @@ export default function AdminPage() {
             meeting_point: data.meeting_point,
             images: imageUrls
           }
-        ])
-        .select()
-        .single();
+        ]);
 
       if (dbError) throw dbError;
-
-      // 3. Criar link do WhatsApp mais direto
-      const siteUrl = `https://maitrilhaadm.vercel.app/agenda/${agendaData.id}`;
-      const message = `A nossa próxima agenda chegou! ⛰️\n\n*${data.title}*\nConfira todas as fotos, informações e garanta sua vaga aqui:\n${siteUrl}`;
       
-      setWhatsappLink(`https://wa.me/?text=${encodeURIComponent(message)}`);
-      
-      alert("Agenda criada com sucesso! As fotos foram enviadas.");
-      reset(); // Limpar formulário
-    } catch (error) {
-      console.error(error);
-      alert("Ocorreu um erro ao salvar a agenda. Veja o console.");
+      alert("Trilha cadastrada com sucesso!");
+      reset();
+      fetchAgendasAndCleanup(); // Atualiza a lista
+    } catch (error: any) {
+      console.error("Erro completo:", error);
+      alert(`Ocorreu um erro: ${error.message || JSON.stringify(error)}`);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Link Global do WhatsApp
+  const globalSiteUrl = "https://maitrilhaadm.vercel.app/agenda";
+  const whatsappMessage = `⛰️ A nossa agenda oficial chegou! Prepare as botas!\n\nClique no link abaixo para conferir as nossas próximas trilhas, ver as fotos, roteiros e garantir sua vaga:\n\n👉 ${globalSiteUrl}`;
+  const whatsappLink = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
+
   return (
     <div className="min-h-screen bg-gray-50 p-6 md:p-12 text-gray-900">
-      <div className="max-w-3xl mx-auto space-y-8">
+      <div className="max-w-6xl mx-auto space-y-8">
         
         <header className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tight">Painel da Administradora</h1>
-          <p className="text-gray-500">Cadastre uma nova trilha, faça upload das fotos e gere o link de compartilhamento.</p>
+          <p className="text-gray-500">Cadastre, gerencie as trilhas e envie o calendário atualizado.</p>
         </header>
 
-        <div className="grid md:grid-cols-[1fr_300px] gap-8">
+        <div className="grid lg:grid-cols-[1fr_400px] gap-8">
           
           {/* Formulário */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+            <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <CalendarDays className="h-5 w-5 text-orange-500" /> 
+              Nova Trilha
+            </h2>
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
               
               <div>
@@ -160,11 +201,11 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center hover:bg-gray-50 transition relative">
-                <ImageIcon className="mx-auto h-8 w-8 text-gray-400 mb-2" />
-                <p className="text-sm text-gray-600 font-medium">Fazer upload de Fotos/Vídeos</p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {selectedFiles && selectedFiles.length > 0 ? `${selectedFiles.length} arquivo(s) selecionado(s)` : 'Nenhuma imagem selecionada'}
+              <div className="border-2 border-dashed border-orange-200 bg-orange-50/50 rounded-xl p-6 text-center hover:bg-orange-50 transition relative">
+                <ImageIcon className="mx-auto h-8 w-8 text-orange-400 mb-2" />
+                <p className="text-sm text-gray-700 font-medium">Clique para subir Fotos e Vídeos</p>
+                <p className="text-xs font-bold text-orange-600 mt-2 bg-white inline-block px-3 py-1 rounded-full border border-orange-100">
+                  {selectedFiles && selectedFiles.length > 0 ? `${selectedFiles.length} arquivo(s) selecionado(s) pronto(s) para envio` : 'Nenhuma mídia selecionada'}
                 </p>
                 <input 
                   type="file" 
@@ -178,46 +219,76 @@ export default function AdminPage() {
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 bg-[#1D2A3A] text-white p-3.5 rounded-xl font-medium hover:bg-gray-800 transition disabled:opacity-70"
+                className="w-full flex items-center justify-center gap-2 bg-[#1D2A3A] text-white p-4 rounded-xl font-medium hover:bg-gray-800 transition disabled:opacity-70 shadow-lg"
               >
                 {isLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
-                  <>Salvar Agenda e Gerar Link</>
+                  <>Cadastrar Trilha na Agenda</>
                 )}
               </button>
 
             </form>
           </div>
 
-          {/* Resultado do Link */}
-          <div className="space-y-4">
-            <div className="bg-gradient-to-br from-[#1D2A3A] to-gray-900 rounded-2xl p-6 text-white h-[fit-content] shadow-lg border border-gray-800 relative overflow-hidden sticky top-6">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-[#F17B37] rounded-full blur-[80px] opacity-20" />
+          {/* Coluna Direita: Dashboard & Link Global */}
+          <div className="space-y-6">
+            
+            {/* Box do Zap Global */}
+            <div className="bg-gradient-to-br from-[#1D2A3A] to-gray-900 rounded-2xl p-6 text-white shadow-lg border border-gray-800 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#25D366] rounded-full blur-[80px] opacity-20" />
+              <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
+                <Send className="h-5 w-5 text-[#25D366]" />
+                Enviar Calendário
+              </h3>
+              <p className="text-sm text-gray-300 mb-5 leading-relaxed">
+                Este botão envia o link do <strong className="text-white">Calendário Oficial</strong> para o grupo do Zap. Ele já conterá todas as trilhas cadastradas ativas.
+              </p>
               
-              <h3 className="font-semibold text-lg flex items-center gap-2 mb-4">
-                <Send className="h-5 w-5 text-[#F17B37]" />
-                WhatsApp
+              <a 
+                href={whatsappLink} 
+                target="_blank" 
+                rel="noreferrer"
+                className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white p-3.5 rounded-xl font-semibold hover:bg-[#1ebd5a] transition shadow-lg shadow-[#25D366]/20"
+              >
+                <Send className="h-5 w-5" />
+                Compartilhar no Grupo
+              </a>
+            </div>
+
+            {/* Lista de Agendas Cadastradas */}
+            <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex-1">
+              <h3 className="font-bold text-gray-800 mb-4 flex items-center justify-between">
+                Trilhas Ativas
+                <span className="bg-orange-100 text-orange-600 text-xs py-1 px-2 rounded-full">{agendas.length}</span>
               </h3>
               
-              {whatsappLink ? (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-300">A agenda foi salva no banco de dados e as fotos enviadas!</p>
-                  <a 
-                    href={whatsappLink} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white p-3.5 rounded-xl font-semibold hover:bg-[#1ebd5a] transition shadow-lg shadow-[#25D366]/20"
-                  >
-                    <Send className="h-5 w-5" />
-                    Enviar para o Grupo
-                  </a>
-                  <p className="text-xs text-gray-400 mt-2 text-center">Ao clicar, o Zap abrirá com o texto pronto. Você pode anexar as fotos por lá também, se quiser.</p>
-                </div>
-              ) : (
-                <p className="text-sm text-gray-400">Preencha e salve o formulário para gerar o link direto de compartilhamento.</p>
-              )}
+              <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                {isFetching ? (
+                  <p className="text-sm text-gray-400 text-center py-4">Carregando...</p>
+                ) : agendas.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">Nenhuma trilha futura cadastrada.</p>
+                ) : (
+                  agendas.map((agenda) => (
+                    <div key={agenda.id} className="flex items-center justify-between p-3 bg-gray-50 border border-gray-100 rounded-xl hover:border-gray-200 transition">
+                      <div className="truncate pr-4">
+                        <p className="text-sm font-bold text-gray-800 truncate">{agenda.title}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{new Date(agenda.date).toLocaleDateString('pt-BR')} • R$ {agenda.price}</p>
+                      </div>
+                      <button 
+                        onClick={() => deleteAgenda(agenda.id)}
+                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition shrink-0"
+                        title="Excluir Trilha"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+              <p className="text-xs text-gray-400 text-center mt-4">Trilhas passadas são excluídas automaticamente.</p>
             </div>
+
           </div>
 
         </div>
