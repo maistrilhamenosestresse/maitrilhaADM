@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
-import { Calendar, MapPin, DollarSign, FileText, Send, Image as ImageIcon, Loader2, Trash2, CalendarDays } from "lucide-react";
+import { Calendar, MapPin, DollarSign, FileText, Send, Image as ImageIcon, Video, Loader2, Trash2, CalendarDays } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 type AgendaForm = {
@@ -13,6 +13,7 @@ type AgendaForm = {
   description: string;
   meeting_point: string;
   images: FileList;
+  video: FileList;
 };
 
 export default function AdminPage() {
@@ -21,21 +22,19 @@ export default function AdminPage() {
   const [agendas, setAgendas] = useState<any[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   
-  const selectedFiles = watch("images");
+  const selectedImages = watch("images");
+  const selectedVideo = watch("video");
 
-  // Busca as agendas e faz a limpeza automática
   const fetchAgendasAndCleanup = async () => {
     setIsFetching(true);
     try {
       const today = new Date().toISOString().split('T')[0];
 
-      // 1. Apaga as que já passaram
       await supabase
         .from('agendas')
         .delete()
         .lt('date', today);
 
-      // 2. Busca as válidas
       const { data, error } = await supabase
         .from('agendas')
         .select('*')
@@ -57,10 +56,11 @@ export default function AdminPage() {
   const deleteAgenda = async (id: string) => {
     if (!window.confirm("Tem certeza que deseja excluir esta trilha?")) return;
     try {
-      await supabase.from('agendas').delete().eq('id', id);
+      const { error } = await supabase.from('agendas').delete().eq('id', id);
+      if (error) throw error;
       fetchAgendasAndCleanup();
-    } catch (error) {
-      alert("Erro ao excluir trilha.");
+    } catch (error: any) {
+      alert("Erro ao excluir trilha: " + error.message);
     }
   };
 
@@ -69,26 +69,34 @@ export default function AdminPage() {
     
     try {
       const imageUrls: string[] = [];
+      let videoUrl: string | null = null;
       
+      // Upload de Imagens
       if (data.images && data.images.length > 0) {
         for (let i = 0; i < data.images.length; i++) {
           const file = data.images[i];
           const fileExt = file.name.split('.').pop();
-          const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
-          const filePath = `${fileName}`;
+          const fileName = `img_${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
 
-          const { error: uploadError } = await supabase.storage
-            .from('fotos_agendas')
-            .upload(filePath, file);
-
+          const { error: uploadError } = await supabase.storage.from('fotos_agendas').upload(fileName, file);
           if (uploadError) throw uploadError;
 
-          const { data: publicUrlData } = supabase.storage
-            .from('fotos_agendas')
-            .getPublicUrl(filePath);
-            
+          const { data: publicUrlData } = supabase.storage.from('fotos_agendas').getPublicUrl(fileName);
           imageUrls.push(publicUrlData.publicUrl);
         }
+      }
+
+      // Upload do Vídeo (separado)
+      if (data.video && data.video.length > 0) {
+        const file = data.video[0];
+        const fileExt = file.name.split('.').pop();
+        const fileName = `vid_${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage.from('fotos_agendas').upload(fileName, file);
+        if (uploadError) throw uploadError;
+
+        const { data: publicUrlData } = supabase.storage.from('fotos_agendas').getPublicUrl(fileName);
+        videoUrl = publicUrlData.publicUrl;
       }
 
       const { error: dbError } = await supabase
@@ -100,7 +108,8 @@ export default function AdminPage() {
             price: parseFloat(data.price.replace(',', '.')),
             description: data.description,
             meeting_point: data.meeting_point,
-            images: imageUrls
+            images: imageUrls,
+            video_url: videoUrl
           }
         ]);
 
@@ -108,7 +117,7 @@ export default function AdminPage() {
       
       alert("Trilha cadastrada com sucesso!");
       reset();
-      fetchAgendasAndCleanup(); // Atualiza a lista
+      fetchAgendasAndCleanup();
     } catch (error: any) {
       console.error("Erro completo:", error);
       alert(`Ocorreu um erro: ${error.message || JSON.stringify(error)}`);
@@ -117,7 +126,6 @@ export default function AdminPage() {
     }
   };
 
-  // Link Global do WhatsApp
   const globalSiteUrl = "https://maitrilhaadm.vercel.app/agenda";
   const whatsappMessage = `⛰️ A nossa agenda oficial chegou! Prepare as botas!\n\nClique no link abaixo para conferir as nossas próximas trilhas, ver as fotos, roteiros e garantir sua vaga:\n\n👉 ${globalSiteUrl}`;
   const whatsappLink = `https://wa.me/?text=${encodeURIComponent(whatsappMessage)}`;
@@ -133,7 +141,6 @@ export default function AdminPage() {
 
         <div className="grid lg:grid-cols-[1fr_400px] gap-8">
           
-          {/* Formulário */}
           <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
             <h2 className="text-lg font-bold mb-4 flex items-center gap-2">
               <CalendarDays className="h-5 w-5 text-orange-500" /> 
@@ -201,25 +208,43 @@ export default function AdminPage() {
                 </div>
               </div>
 
-              <div className="border-2 border-dashed border-orange-200 bg-orange-50/50 rounded-xl p-6 text-center hover:bg-orange-50 transition relative">
-                <ImageIcon className="mx-auto h-8 w-8 text-orange-400 mb-2" />
-                <p className="text-sm text-gray-700 font-medium">Clique para subir Fotos e Vídeos</p>
-                <p className="text-xs font-bold text-orange-600 mt-2 bg-white inline-block px-3 py-1 rounded-full border border-orange-100">
-                  {selectedFiles && selectedFiles.length > 0 ? `${selectedFiles.length} arquivo(s) selecionado(s) pronto(s) para envio` : 'Nenhuma mídia selecionada'}
-                </p>
-                <input 
-                  type="file" 
-                  multiple 
-                  accept="image/*,video/*"
-                  {...register("images")}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                />
+              <div className="grid grid-cols-2 gap-4">
+                {/* Upload Fotos */}
+                <div className="border-2 border-dashed border-orange-200 bg-orange-50/50 rounded-xl p-4 text-center hover:bg-orange-50 transition relative">
+                  <ImageIcon className="mx-auto h-6 w-6 text-orange-400 mb-2" />
+                  <p className="text-sm text-gray-700 font-medium">Fotos</p>
+                  <p className="text-xs font-bold text-orange-600 mt-1">
+                    {selectedImages && selectedImages.length > 0 ? `${selectedImages.length} selecionada(s)` : 'Selecionar'}
+                  </p>
+                  <input 
+                    type="file" 
+                    multiple 
+                    accept="image/*"
+                    {...register("images")}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </div>
+
+                {/* Upload Vídeo */}
+                <div className="border-2 border-dashed border-blue-200 bg-blue-50/50 rounded-xl p-4 text-center hover:bg-blue-50 transition relative">
+                  <Video className="mx-auto h-6 w-6 text-blue-400 mb-2" />
+                  <p className="text-sm text-gray-700 font-medium">1 Vídeo (Opcional)</p>
+                  <p className="text-xs font-bold text-blue-600 mt-1">
+                    {selectedVideo && selectedVideo.length > 0 ? `Vídeo pronto` : 'Selecionar'}
+                  </p>
+                  <input 
+                    type="file" 
+                    accept="video/*"
+                    {...register("video")}
+                    className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  />
+                </div>
               </div>
 
               <button 
                 type="submit" 
                 disabled={isLoading}
-                className="w-full flex items-center justify-center gap-2 bg-[#1D2A3A] text-white p-4 rounded-xl font-medium hover:bg-gray-800 transition disabled:opacity-70 shadow-lg"
+                className="w-full flex items-center justify-center gap-2 bg-[#1D2A3A] text-white p-4 rounded-xl font-medium hover:bg-gray-800 transition disabled:opacity-70 shadow-lg mt-2"
               >
                 {isLoading ? (
                   <Loader2 className="h-5 w-5 animate-spin" />
@@ -231,10 +256,8 @@ export default function AdminPage() {
             </form>
           </div>
 
-          {/* Coluna Direita: Dashboard & Link Global */}
           <div className="space-y-6">
             
-            {/* Box do Zap Global */}
             <div className="bg-gradient-to-br from-[#1D2A3A] to-gray-900 rounded-2xl p-6 text-white shadow-lg border border-gray-800 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#25D366] rounded-full blur-[80px] opacity-20" />
               <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
@@ -242,9 +265,8 @@ export default function AdminPage() {
                 Enviar Calendário
               </h3>
               <p className="text-sm text-gray-300 mb-5 leading-relaxed">
-                Este botão envia o link do <strong className="text-white">Calendário Oficial</strong> para o grupo do Zap. Ele já conterá todas as trilhas cadastradas ativas.
+                Este botão envia o link do <strong className="text-white">Calendário Oficial</strong> para o grupo.
               </p>
-              
               <a 
                 href={whatsappLink} 
                 target="_blank" 
@@ -256,7 +278,6 @@ export default function AdminPage() {
               </a>
             </div>
 
-            {/* Lista de Agendas Cadastradas */}
             <div className="bg-white p-6 rounded-2xl shadow-sm border border-gray-100 flex-1">
               <h3 className="font-bold text-gray-800 mb-4 flex items-center justify-between">
                 Trilhas Ativas
@@ -286,7 +307,6 @@ export default function AdminPage() {
                   ))
                 )}
               </div>
-              <p className="text-xs text-gray-400 text-center mt-4">Trilhas passadas são excluídas automaticamente.</p>
             </div>
 
           </div>
