@@ -116,14 +116,15 @@ export default function AdminPage() {
       };
 
       mediaRecorder.onstop = async () => {
-        const audioBlob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const mimeType = mediaRecorder.mimeType || 'audio/webm';
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
         
         // Converter Blob para Base64
         const reader = new FileReader();
         reader.readAsDataURL(audioBlob);
         reader.onloadend = async () => {
           const base64data = (reader.result as string).split(',')[1];
-          await processAudioWithAI(base64data, type);
+          await processAudioWithAI(base64data, type, mimeType);
         };
 
         // Limpar recursos do microfone
@@ -152,7 +153,7 @@ export default function AdminPage() {
     if (timerRef.current) clearInterval(timerRef.current);
   };
 
-  const processAudioWithAI = async (audioBase64: string, type: 'meeting_point' | 'description') => {
+  const processAudioWithAI = async (audioBase64: string, type: 'meeting_point' | 'description', mimeType: string = 'audio/webm') => {
     if (type === 'meeting_point') {
       setIsFormattingMeetingPoint(true);
       setAiSuccessMeeting(false);
@@ -165,7 +166,7 @@ export default function AdminPage() {
       const res = await fetch("/api/generate-message", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ audioBase64, mimeType: 'audio/webm', type })
+        body: JSON.stringify({ audioBase64, mimeType, type })
       });
       const data = await res.json();
       
@@ -526,6 +527,26 @@ export default function AdminPage() {
           {/* Painel Lateral: Trilhas Ativas */}
           <div className="space-y-6">
             
+            <div className="bg-gradient-to-br from-[#1D2A3A] to-gray-900 rounded-2xl p-6 text-white shadow-lg border border-gray-800 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#25D366] rounded-full blur-[80px] opacity-20" />
+              <h3 className="font-semibold text-lg flex items-center gap-2 mb-2">
+                <Send className="h-5 w-5 text-[#25D366]" />
+                Enviar Calendário
+              </h3>
+              <p className="text-sm text-gray-300 mb-5 leading-relaxed">
+                Este botão envia o link do <strong className="text-white">Calendário Oficial</strong> para o grupo.
+              </p>
+              <a 
+                href={whatsappLink} 
+                target="_blank" 
+                rel="noreferrer"
+                className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white p-3.5 rounded-xl font-semibold hover:bg-[#1ebd5a] transition shadow-lg shadow-[#25D366]/20"
+              >
+                <Send className="h-5 w-5" />
+                Compartilhar no Grupo
+              </a>
+            </div>
+
             <div className="bg-white p-4 md:p-6 rounded-2xl shadow-sm border border-gray-100 flex-1 h-[400px] md:h-auto overflow-hidden flex flex-col">
               <h3 className="font-bold text-gray-800 mb-4 flex items-center justify-between">
                 Trilhas Ativas
