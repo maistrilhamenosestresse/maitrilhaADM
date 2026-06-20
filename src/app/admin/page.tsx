@@ -114,7 +114,7 @@ export default function AdminPage() {
 
   const startRecording = async (type: 'meeting_point' | 'description' | 'assistant') => {
     try {
-      const SpeechRecognition = window.SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
       
       if (!SpeechRecognition) {
         alert("Seu navegador não suporta digitação por voz nativa. Tente usar o Google Chrome ou Safari.");
