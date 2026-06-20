@@ -109,6 +109,12 @@ export default function AdminPage() {
         return;
       }
 
+      // Evita erro ao clicar rápido demais (já tem um rodando)
+      if ((window as any).currentRecognition) {
+        try { (window as any).currentRecognition.stop(); } catch(e) {}
+        (window as any).currentRecognition = null;
+      }
+
       const recognition = new SpeechRecognition();
       recognition.lang = 'pt-BR';
       recognition.continuous = true;
@@ -121,6 +127,7 @@ export default function AdminPage() {
       recognition.onstart = () => {
         setRecordingType(type);
         setRecordingTime(0);
+        if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = setInterval(() => setRecordingTime(prev => prev + 1), 1000);
       };
 
@@ -139,14 +146,16 @@ export default function AdminPage() {
 
       recognition.onerror = (event: any) => {
         console.error("Erro no reconhecimento de voz:", event.error);
-        if (event.error !== 'aborted') {
+        if (event.error !== 'aborted' && event.error !== 'no-speech') {
+          // Apenas mostra erro se não for o usuário cancelando ou silêncio
           alert("Erro ao captar a voz: " + event.error);
         }
         stopRecording();
       };
 
       recognition.onend = () => {
-        // Quando parar de ouvir, aciona a IA automaticamente para formatar o texto!
+        // Se a gravação foi encerrada de propósito pelo botão, o recordingType vai ser null (no stopRecording)
+        // Mas se parar sozinho, a gente força a formatação.
         stopRecording();
         formatTextWithAI(type);
       };
@@ -157,13 +166,13 @@ export default function AdminPage() {
 
     } catch (err) {
       console.error("Erro ao iniciar microfone", err);
-      alert("Não foi possível acessar o microfone. Verifique se o seu navegador tem permissão.");
+      // alert silencioso para erros duplicados
     }
   };
 
   const stopRecording = () => {
     if ((window as any).currentRecognition) {
-      (window as any).currentRecognition.stop();
+      try { (window as any).currentRecognition.stop(); } catch(e) {}
       (window as any).currentRecognition = null;
     }
     setRecordingType(null);
