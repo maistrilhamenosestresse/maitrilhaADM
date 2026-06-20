@@ -170,11 +170,7 @@ export default function AdminPage() {
 
       recognition.onend = () => {
         stopRecording();
-        if (type === 'assistant') {
-          if (finalTranscript.trim().length > 3) {
-            handleSendChatMessage(finalTranscript.trim());
-          }
-        } else {
+        if (type !== 'assistant') {
           formatTextWithAI(type);
         }
       };
@@ -754,10 +750,10 @@ export default function AdminPage() {
                   rows={1}
                 />
                 
-                {chatInput.trim() ? (
+                {chatInput.trim() && recordingType !== 'assistant' ? (
                   <button 
                     onClick={() => handleSendChatMessage(chatInput)}
-                    disabled={isAssistantProcessing || recordingType === 'assistant'}
+                    disabled={isAssistantProcessing}
                     className="bg-purple-600 text-white h-11 w-11 rounded-full flex items-center justify-center shrink-0 hover:bg-purple-700 transition-colors disabled:opacity-50"
                   >
                     <Send className="h-5 w-5 ml-1" />
@@ -765,8 +761,16 @@ export default function AdminPage() {
                 ) : (
                   <button 
                     onClick={() => {
-                      if (recordingType === 'assistant') stopRecording();
-                      else startRecording('assistant');
+                      if (recordingType === 'assistant') {
+                        stopRecording();
+                        // Como o finalTranscript de dentro da closure pode estar desatualizado,
+                        // pegamos o texto atual do chatInput e enviamos
+                        if (chatInput.trim().length > 3) {
+                          handleSendChatMessage(chatInput.trim());
+                        }
+                      } else {
+                        startRecording('assistant');
+                      }
                     }}
                     disabled={isAssistantProcessing}
                     className={`h-11 w-11 rounded-full flex items-center justify-center shrink-0 transition-all ${
