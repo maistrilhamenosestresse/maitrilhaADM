@@ -469,8 +469,7 @@ export default function AdminPage() {
                     <div className="relative">
                       <textarea 
                         {...register("meeting_point", { required: true })}
-                        rows={5}
-                        className={`w-full p-3 bg-white border border-gray-200 rounded-xl outline-none resize-none transition-all focus:border-blue-400 ${isFormattingMeetingPoint ? 'opacity-50' : ''}`} 
+                        className={`w-full h-[30vh] max-h-[400px] p-3 bg-white border border-gray-200 rounded-xl outline-none resize-none transition-all focus:border-blue-400 custom-scrollbar ${isFormattingMeetingPoint ? 'opacity-50' : ''}`} 
                         placeholder="Clique no botão 'ÁUDIO IA' e fale os locais e horários. Ex: 'O ônibus passa no Terminal às 5 horas...'" 
                         readOnly={isFormattingMeetingPoint}
                       />
@@ -507,8 +506,7 @@ export default function AdminPage() {
                     <div className="relative">
                       <textarea 
                         {...register("description", { required: true })}
-                        rows={6}
-                        className={`w-full p-3 bg-white border border-gray-200 rounded-xl outline-none resize-none transition-all focus:border-purple-400 ${isFormattingDescription ? 'opacity-50' : ''}`} 
+                        className={`w-full h-[40vh] max-h-[500px] p-3 bg-white border border-gray-200 rounded-xl outline-none resize-none transition-all focus:border-purple-400 custom-scrollbar ${isFormattingDescription ? 'opacity-50' : ''}`} 
                         placeholder="Clique no botão 'ÁUDIO IA' e comece a descrever a trilha, as belezas naturais e as recomendações..." 
                         readOnly={isFormattingDescription}
                       />
