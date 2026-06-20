@@ -683,10 +683,10 @@ export default function AdminPage() {
       {/* BOTÃO FLUTUANTE DO ASSISTENTE IA */}
       <button
         onClick={() => setIsAssistantOpen(true)}
-        className="fixed bottom-[90px] md:bottom-8 right-4 md:right-8 bg-gradient-to-r from-purple-600 to-indigo-600 text-white p-4 rounded-full shadow-[0_0_20px_rgba(124,58,237,0.4)] hover:scale-110 transition-transform z-40 animate-bounce"
+        className="fixed bottom-[90px] md:bottom-8 right-4 md:right-8 bg-gradient-to-r from-gray-900 to-black text-white p-3 rounded-full shadow-[0_0_20px_rgba(0,0,0,0.4)] hover:scale-110 transition-transform z-40 animate-bounce border-2 border-orange-500"
         title="Assistente IA (Chat Mágico)"
       >
-        <Bot className="h-7 w-7" />
+        <img src="/logo.png" alt="Logo Mais Trilha" className="h-10 w-10 object-contain drop-shadow-md" />
       </button>
 
       {/* MODAL DO ASSISTENTE IA (CHAT HÍBRIDO) */}
@@ -694,9 +694,9 @@ export default function AdminPage() {
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl relative animate-in zoom-in-95 duration-300 flex flex-col h-[85vh] max-h-[800px]">
             
-            <div className="bg-gradient-to-r from-purple-600 to-indigo-600 p-4 text-white flex justify-between items-center shrink-0">
+            <div className="bg-gradient-to-r from-gray-900 to-black border-b-2 border-orange-500 p-4 text-white flex justify-between items-center shrink-0">
               <div className="flex items-center gap-3">
-                <div className="bg-white/20 p-2 rounded-full"><Bot className="h-6 w-6" /></div>
+                <div className="bg-white/10 p-1.5 rounded-full"><img src="/logo.png" alt="Logo" className="h-7 w-7 object-contain" /></div>
                 <div>
                   <h3 className="font-bold text-lg leading-tight">Assistente IA</h3>
                   <p className="text-purple-100 text-xs mt-0.5">Converse ou mande cadastrar trilhas</p>
