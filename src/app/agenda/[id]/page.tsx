@@ -190,7 +190,7 @@ export default function AgendaDetailsPage() {
                   className="space-y-4"
                 >
                   <div className="bg-[#151D2A] border border-white/5 rounded-3xl p-6 md:p-8 shadow-xl max-h-[60vh] overflow-y-auto dark-scrollbar">
-                    <h3 className="text-xl font-bold mb-6 text-[#F17B37] flex items-center gap-2 sticky top-0 bg-[#151D2A] pt-2 pb-4 z-10">
+                    <h3 className="text-xl font-bold mb-6 text-[#F17B37] flex items-center gap-2">
                       <Info className="h-5 w-5" /> Detalhes da Aventura
                     </h3>
                     <div className="text-gray-300 whitespace-pre-wrap leading-relaxed text-base md:text-lg">
@@ -211,7 +211,7 @@ export default function AgendaDetailsPage() {
                   className="space-y-4"
                 >
                   <div className="bg-[#151D2A] border border-white/5 rounded-3xl p-6 md:p-8 shadow-xl max-h-[60vh] overflow-y-auto dark-scrollbar">
-                    <h3 className="text-xl font-bold mb-6 text-[#F17B37] flex items-center gap-2 sticky top-0 bg-[#151D2A] pt-2 pb-4 z-10">
+                    <h3 className="text-xl font-bold mb-6 text-[#F17B37] flex items-center gap-2">
                       <MapPin className="h-5 w-5" /> Locais de Embarque
                     </h3>
                     <div className="text-gray-300 whitespace-pre-wrap leading-relaxed text-base md:text-lg">
@@ -229,7 +229,7 @@ export default function AgendaDetailsPage() {
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.3 }}
-                  className="space-y-6"
+                  className="space-y-6 max-h-[60vh] overflow-y-auto dark-scrollbar pr-2"
                 >
                   {agenda.video_url && (
                     <div className="bg-[#151D2A] border border-white/5 rounded-3xl p-4 shadow-xl">
