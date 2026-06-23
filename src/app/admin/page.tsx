@@ -639,7 +639,7 @@ export default function AdminPage() {
                   Trilhas Ativas
                   <span className="bg-[#F17B37]/10 text-[#F17B37] text-xs py-1 px-3 rounded-full font-bold">{agendas.length}</span>
                 </div>
-                {globalViews > 0 && (
+                {globalViews !== undefined && (
                   <div className="flex items-center gap-1.5 bg-green-50 text-green-700 px-3 py-1.5 rounded-xl border border-green-200 shadow-sm">
                     <Eye className="h-4 w-4" />
                     <span className="text-xs font-extrabold uppercase tracking-wide">Total de Acessos: {globalViews}</span>
