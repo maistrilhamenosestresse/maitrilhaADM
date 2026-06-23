@@ -290,7 +290,10 @@ export default function AdminPage() {
       }
 
       if (data.images && data.images.length > 0) {
-        imageUrls = [];
+        // Se for edição, mantém as fotos antigas e apenas adiciona as novas
+        if (!editingAgenda) {
+          imageUrls = [];
+        }
         for (let i = 0; i < data.images.length; i++) {
           const file = data.images[i];
           const fileExt = file.name.split('.').pop();
@@ -551,7 +554,7 @@ export default function AdminPage() {
 
                     <div className="border-2 border-dashed border-orange-200 bg-orange-50/50 rounded-xl p-6 text-center hover:bg-orange-50 transition relative group">
                       <ImageIcon className="mx-auto h-8 w-8 text-orange-400 mb-3 group-hover:scale-110 transition" />
-                      <p className="text-base text-gray-700 font-bold">{editingAgenda ? 'Substituir Carrossel de Fotos' : 'Fotos do Local'}</p>
+                      <p className="text-base text-gray-700 font-bold">{editingAgenda ? 'Adicionar mais Fotos' : 'Fotos do Local'}</p>
                       <p className="text-sm font-bold text-orange-600 mt-2 bg-white inline-block px-4 py-1 rounded-full shadow-sm">
                         {selectedImages && selectedImages.length > 0 ? `${selectedImages.length} fotos selecionadas` : 'Selecionar Múltiplas'}
                       </p>
