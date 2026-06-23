@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, MapPin, DollarSign, CheckCircle2, ChevronLeft, ChevronRight, Video as VideoIcon, Send, FileText, Image as ImageIcon, Info, X } from "lucide-react";
+import { Calendar, MapPin, DollarSign, CheckCircle2, ChevronLeft, ChevronRight, Video as VideoIcon, Send, FileText, Image as ImageIcon, Info, X, Instagram } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -25,6 +25,16 @@ export default function AgendaDetailsPage() {
         
       if (!error && data) {
         setAgenda(data);
+        
+        // Incrementa visualização apenas uma vez por carregamento de página
+        try {
+          await supabase
+            .from('agendas')
+            .update({ views: (data.views || 0) + 1 })
+            .eq('id', data.id);
+        } catch (e) {
+          console.error("Erro ao computar visualização", e);
+        }
       }
       setIsLoading(false);
     }
@@ -139,6 +149,13 @@ export default function AgendaDetailsPage() {
               <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse"></span>
               Vagas Abertas
             </div>
+            {/* Visualizações Simples */}
+            {agenda.views !== undefined && (
+              <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                {agenda.views} pessoas visualizaram
+              </div>
+            )}
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -292,15 +309,27 @@ export default function AgendaDetailsPage() {
         className="fixed bottom-0 left-0 right-0 p-4 md:p-6 bg-gradient-to-t from-[#0F1722] via-[#0F1722] to-transparent z-40"
       >
         <div className="max-w-2xl mx-auto flex flex-col gap-3">
-          <a 
-            href={whatsappUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="w-full flex items-center justify-center gap-2 bg-[#25D366] text-white p-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-[#20b858] hover:scale-[1.02] transition-all"
-          >
-            <CheckCircle2 className="h-6 w-6" />
-            Garantir Vaga (WhatsApp)
-          </a>
+          <div className="flex gap-2">
+            <a 
+              href={whatsappUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] text-white p-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-[#20b858] hover:scale-[1.02] transition-all"
+            >
+              <CheckCircle2 className="h-6 w-6" />
+              Garantir Vaga
+            </a>
+            
+            <a 
+              href="https://www.instagram.com/maistrilhamenosestresse/"
+              target="_blank"
+              rel="noreferrer"
+              className="flex-none flex items-center justify-center bg-gradient-to-tr from-[#f9ce34] via-[#ee2a7b] to-[#6228d7] text-white p-4 rounded-2xl font-bold shadow-lg hover:scale-[1.02] transition-all"
+              title="Siga no Instagram"
+            >
+              <Instagram className="h-6 w-6" />
+            </a>
+          </div>
         </div>
       </motion.div>
 
