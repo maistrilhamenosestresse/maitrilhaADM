@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, MapPin, DollarSign, CheckCircle2, ChevronLeft, ChevronRight, Video as VideoIcon, Send, FileText, Image as ImageIcon, Info } from "lucide-react";
+import { Calendar, MapPin, DollarSign, CheckCircle2, ChevronLeft, ChevronRight, Video as VideoIcon, Send, FileText, Image as ImageIcon, Info, X } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -12,6 +12,7 @@ export default function AgendaDetailsPage() {
   const [agenda, setAgenda] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'roteiro' | 'embarque' | 'galeria'>('roteiro');
 
   useEffect(() => {
@@ -257,7 +258,11 @@ export default function AgendaDetailsPage() {
                       </h3>
                       <div className="grid grid-cols-2 gap-3">
                         {agenda.images.map((img: string, idx: number) => (
-                          <div key={idx} className="aspect-square rounded-xl overflow-hidden border border-white/10 group">
+                          <div 
+                            key={idx} 
+                            onClick={() => setLightboxIndex(idx)}
+                            className="aspect-square rounded-xl overflow-hidden border border-white/10 group cursor-pointer"
+                          >
                             <img src={img} alt={`Foto ${idx+1}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                           </div>
                         ))}
@@ -298,6 +303,65 @@ export default function AgendaDetailsPage() {
           </a>
         </div>
       </motion.div>
+
+      {/* LIGHTBOX DE FOTOS */}
+      <AnimatePresence>
+        {lightboxIndex !== null && agenda.images && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-sm"
+            onClick={() => setLightboxIndex(null)}
+          >
+            {/* Fechar */}
+            <button 
+              onClick={() => setLightboxIndex(null)}
+              className="absolute top-6 right-6 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition z-50"
+            >
+              <X className="h-6 w-6" />
+            </button>
+
+            {/* Anterior */}
+            {lightboxIndex > 0 && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex - 1); }}
+                className="absolute left-4 md:left-8 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 p-3 rounded-full transition z-50"
+              >
+                <ChevronLeft className="h-8 w-8" />
+              </button>
+            )}
+
+            {/* Próxima */}
+            {lightboxIndex < agenda.images.length - 1 && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); setLightboxIndex(lightboxIndex + 1); }}
+                className="absolute right-4 md:right-8 text-white/70 hover:text-white bg-black/50 hover:bg-black/80 p-3 rounded-full transition z-50"
+              >
+                <ChevronRight className="h-8 w-8" />
+              </button>
+            )}
+
+            {/* Imagem */}
+            <motion.img
+              key={lightboxIndex}
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              src={agenda.images[lightboxIndex]}
+              alt="Foto Expandida"
+              className="w-full h-full object-contain max-w-5xl mx-auto p-4 cursor-default"
+              onClick={(e) => e.stopPropagation()}
+            />
+            
+            {/* Indicador */}
+            <div className="absolute bottom-8 left-0 right-0 text-center text-white/70 text-sm font-bold tracking-widest z-50 bg-black/40 py-1 w-24 mx-auto rounded-full backdrop-blur">
+              {lightboxIndex + 1} / {agenda.images.length}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
     </div>
   );
