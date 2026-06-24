@@ -92,10 +92,16 @@ async function safeSendMessage(phoneStr, message, mediaUrl = null) {
         else await sendWithTimeout(client.sendMessage(targetId, message || ''));
         return targetId;
     } catch (e) {
+        // Se o erro foi um Timeout, o WhatsApp não recusou o número, ele apenas engasgou. Repassa o erro direto.
+        if (e.message && e.message.includes('Timeout')) {
+            throw e;
+        }
+
+        // Fallback apenas se o WhatsApp recusou o número
         if (phoneStr.length === 13 && phoneStr.startsWith('55')) {
             const fallbackStr = phoneStr.substring(0, 4) + phoneStr.substring(5); 
             const fallbackId = fallbackStr + '@c.us';
-            console.log(`[Send] Fallback ativado (removendo 9): tentando para ${fallbackId}...`);
+            console.log(`[Send] WhatsApp recusou. Fallback ativado (removendo 9): tentando para ${fallbackId}...`);
             
             if (media) await sendWithTimeout(client.sendMessage(fallbackId, media, { caption: message || '' }));
             else await sendWithTimeout(client.sendMessage(fallbackId, message || ''));
