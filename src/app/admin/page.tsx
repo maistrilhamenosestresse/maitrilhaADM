@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { Calendar, MapPin, DollarSign, FileText, Send, Image as ImageIcon, Video, Loader2, Trash2, CalendarDays, Edit2, Sparkles, CheckCircle2, FileUp, Mic, Square, Navigation, Camera, AlertCircle, Bot, X, MessageSquare, Plus, Eye } from "lucide-react";
+import { Calendar, MapPin, DollarSign, FileText, Send, Image as ImageIcon, Video, Loader2, Trash2, CalendarDays, Edit2, Sparkles, CheckCircle2, FileUp, Mic, Square, Navigation, Camera, AlertCircle, Bot, X, MessageSquare, Plus, Eye, User, ShieldCheck } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 type AgendaForm = {
