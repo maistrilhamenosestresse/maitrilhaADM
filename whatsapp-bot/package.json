@@ -1,0 +1,15 @@
+{
+  "name": "maistrilha-whatsapp-bot",
+  "version": "1.0.0",
+  "description": "Bot de WhatsApp da Mais Trilha Menos Estresse",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "qrcode-terminal": "^0.12.0",
+    "whatsapp-web.js": "^1.23.0",
+    "puppeteer": "^22.0.0"
+  }
+}
