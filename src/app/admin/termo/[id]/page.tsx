@@ -45,7 +45,7 @@ export default function TermoPrintPage() {
         </button>
       </div>
 
-      <div className="max-w-[800px] mx-auto bg-white p-12 shadow-lg print:shadow-none print:p-0">
+      <div className="max-w-[800px] mx-auto bg-white p-6 md:p-12 shadow-lg print:shadow-none print:p-0 text-base md:text-sm print:text-sm">
         
         <div className="text-center mb-8 border-b-2 border-black pb-6">
           <h1 className="text-2xl font-black text-[#113a5d] mb-4 uppercase">TERMO DE RECONHECIMENTO DE RISCO E ISENÇÃO DE RESPONSABILIDADE</h1>
@@ -57,7 +57,8 @@ export default function TermoPrintPage() {
             <h2 className="font-bold text-[#113a5d]">1. Dados do Participante</h2>
           </div>
           
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto print:overflow-visible">
+            <table className="w-full text-base md:text-sm print:text-sm min-w-[300px]">
             <tbody>
               <tr>
                 <td className="py-2 font-bold w-32">Nome Completo:</td>
@@ -93,16 +94,17 @@ export default function TermoPrintPage() {
               </tr>
             </tbody>
           </table>
+          </div>
         </div>
 
         <div className="mb-6">
           <div className="bg-[#eef5fa] p-2 mb-4 border-l-4 border-[#113a5d]">
             <h2 className="font-bold text-[#113a5d]">2. Natureza da Atividade e Riscos Inerentes</h2>
           </div>
-          <p className="text-sm text-justify mb-4">
+          <p className="text-base md:text-sm print:text-sm text-justify mb-4">
             Declaro estar ciente de que a expedição é uma atividade de turismo de aventura e montanhismo, realizada em ambiente natural, estando sujeita a riscos inerentes que não podem ser totalmente eliminados, mesmo com o planejamento e a intervenção dos guias. Compreendo e aceito que os riscos incluem, mas não se limitam a:
           </p>
-          <ul className="text-sm list-disc pl-8 space-y-1">
+          <ul className="text-base md:text-sm print:text-sm list-disc pl-8 space-y-2 md:space-y-1">
             <li>Temperaturas extremas (frio intenso, ventos fortes e risco real de hipotermia);</li>
             <li>Mal da montanha ou desconfortos decorrentes dos efeitos de altitude elevada;</li>
             <li>Terreno irregular, escorregadio, rochoso e íngreme, com riscos de quedas, torções, fraturas ou escoriações;</li>
@@ -116,7 +118,7 @@ export default function TermoPrintPage() {
           <div className="bg-[#eef5fa] p-2 mb-4 border-l-4 border-[#113a5d]">
             <h2 className="font-bold text-[#113a5d]">3. Condições de Saúde e Aptidão Física</h2>
           </div>
-          <p className="text-sm text-justify">
+          <p className="text-base md:text-sm print:text-sm text-justify">
             Declaro voluntariamente que gozo de boa saúde física e mental e que não possuo nenhuma contraindicação médica que me impeça de realizar esforços físicos de intensidade severa. Assumo total e exclusiva responsabilidade pela minha integridade e condição física antes, durante e após a realização da atividade.
           </p>
         </div>
@@ -125,7 +127,7 @@ export default function TermoPrintPage() {
           <div className="bg-[#eef5fa] p-2 mb-4 border-l-4 border-[#113a5d]">
             <h2 className="font-bold text-[#113a5d]">4. Equipamentos e Vestuário</h2>
           </div>
-          <p className="text-sm text-justify">
+          <p className="text-base md:text-sm print:text-sm text-justify">
             Estou ciente de que é minha estrita obrigação portar e utilizar os equipamentos e vestuários recomendados e exigidos pela organização Mais Trilha e Menos Estresse. A organização reserva-se o direito de vetar a minha participação, sem direito a reembolso, caso seja constatada a ausência de itens essenciais para a minha própria segurança.
           </p>
         </div>
@@ -134,8 +136,8 @@ export default function TermoPrintPage() {
           <div className="bg-[#eef5fa] p-2 mb-4 border-l-4 border-[#113a5d]">
             <h2 className="font-bold text-[#113a5d]">5. Regras de Conduta e Segurança</h2>
           </div>
-          <p className="text-sm text-justify mb-2">Comprometo-me formalmente a:</p>
-          <ul className="text-sm list-disc pl-8 space-y-1">
+          <p className="text-base md:text-sm print:text-sm text-justify mb-2">Comprometo-me formalmente a:</p>
+          <ul className="text-base md:text-sm print:text-sm list-disc pl-8 space-y-2 md:space-y-1">
             <li>Seguir rigorosamente todas as instruções, orientações técnicas e decisões emitidas pelos guias e líderes da Mais Trilha e Menos Estresse durante todo o percurso;</li>
             <li>Respeitar integralmente as normas do Parque ou local da trilha, zelando pela preservação ambiental;</li>
             <li>Compreender e aceitar que o guia líder detém autoridade total para alterar, interromper ou cancelar a subida ou o cronograma caso julgue que as condições ambientais, climáticas ou de saúde configurem risco à segurança geral.</li>
@@ -146,7 +148,7 @@ export default function TermoPrintPage() {
           <div className="bg-[#eef5fa] p-2 mb-4 border-l-4 border-[#113a5d]">
             <h2 className="font-bold text-[#113a5d]">6. Isenção de Responsabilidade</h2>
           </div>
-          <p className="text-sm text-justify">
+          <p className="text-base md:text-sm print:text-sm text-justify">
             Ao assinar este termo de livre e espontânea vontade, assumo integralmente todos os riscos associados à expedição. Isento expressamente a organização Mais Trilha e Menos Estresse de qualquer responsabilidade civil ou criminal por eventuais danos físicos, morais, materiais, lesões, invalidez ou acidentes que possam ocorrer comigo durante o evento, decorrentes de minha própria imprudência.
           </p>
         </div>
@@ -155,7 +157,7 @@ export default function TermoPrintPage() {
           <div className="bg-[#eef5fa] p-2 mb-4 border-l-4 border-[#113a5d]">
             <h2 className="font-bold text-[#113a5d]">7. Atendimento de Emergência</h2>
           </div>
-          <p className="text-sm text-justify">
+          <p className="text-base md:text-sm print:text-sm text-justify">
             Autorizo a equipe da Mais Trilha e Menos Estresse a tomar todas as medidas cabíveis de primeiros socorros e, se necessário, acionar serviços oficiais de resgate. Fica estipulado que eventuais custos médicos adicionais serão de minha inteira e exclusiva responsabilidade.
           </p>
         </div>
@@ -164,8 +166,8 @@ export default function TermoPrintPage() {
           <div className="bg-[#eef5fa] p-2 mb-4 border-l-4 border-[#113a5d]">
             <h2 className="font-bold text-[#113a5d]">8. Autorização de Uso de Imagem</h2>
           </div>
-          <p className="text-sm text-justify mb-2">Declaro minha preferência quanto ao uso de registros audiovisuais coletados durante a expedição:</p>
-          <div className="text-sm pl-4">
+          <p className="text-base md:text-sm print:text-sm text-justify mb-2">Declaro minha preferência quanto ao uso de registros audiovisuais coletados durante a expedição:</p>
+          <div className="text-base md:text-sm print:text-sm pl-4">
             <p>
               <strong>{client.image_authorization ? '[ X ]' : '[   ]'} AUTORIZO</strong> o uso de minha imagem e voz para fins de divulgação e marketing em redes sociais de forma gratuita e por prazo indeterminado.
             </p>
@@ -176,22 +178,22 @@ export default function TermoPrintPage() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-gray-300 print:break-before-page">
-          <p className="text-sm text-center mb-8">
+          <p className="text-base md:text-sm print:text-sm text-center mb-8">
             Por estar de pleno e mútuo acordo com todos os termos e condições aqui estabelecidos, assinei digitalmente o presente documento.
           </p>
 
-          <div className="flex justify-between items-end mt-16 px-8">
-            <div className="text-sm w-1/3">
+          <div className="flex flex-col md:flex-row justify-between items-center md:items-end mt-16 px-4 md:px-8 gap-8 md:gap-0">
+            <div className="text-base md:text-sm print:text-sm w-full md:w-1/3 text-center md:text-left">
               <p>Data: {new Date(client.created_at || Date.now()).toLocaleDateString('pt-BR')}</p>
             </div>
             
-            <div className="w-1/2 flex flex-col items-center">
+            <div className="w-full md:w-1/2 flex flex-col items-center">
               {client.signature_url ? (
                 <img src={client.signature_url} alt="Assinatura" className="h-24 object-contain mb-2 mix-blend-multiply" />
               ) : (
                 <div className="h-24 flex items-center justify-center text-gray-300 italic text-sm">Sem assinatura digital</div>
               )}
-              <div className="border-t border-black w-full text-center pt-2 text-sm font-bold">
+              <div className="border-t border-black w-full text-center pt-2 text-base md:text-sm print:text-sm font-bold">
                 Assinatura Digital do Participante<br/>
                 <span className="font-normal text-xs text-gray-500">Aceite registrado no sistema online</span>
               </div>
