@@ -50,6 +50,7 @@ export default function AdminPage() {
       const { error } = await supabase.from('clients')
         .update({
           full_name: editingClient.full_name,
+          email: editingClient.email,
           cpf: editingClient.cpf,
           rg: editingClient.rg,
           phone: editingClient.phone,
@@ -815,7 +816,8 @@ export default function AdminPage() {
                           <p className="text-gray-500 text-xs mt-0.5"><strong>RG:</strong> {client.rg}</p>
                         </td>
                         <td className="p-4">
-                          <p className="text-gray-900">{client.phone}</p>
+                          <p className="text-gray-900 font-bold">{client.phone}</p>
+                          <p className="text-gray-500 text-xs mt-0.5 break-all">{client.email || 'Sem e-mail'}</p>
                         </td>
                         <td className="p-4">
                           <p className="text-gray-900 font-medium">{client.emergency_contact_name}</p>
@@ -1026,14 +1028,25 @@ export default function AdminPage() {
                   />
                 </div>
               </div>
-              <div>
-                <label className="block text-sm font-bold text-gray-700 mb-1">Telefone</label>
-                <input 
-                  type="text" required
-                  value={editingClient.phone}
-                  onChange={e => setEditingClient({...editingClient, phone: e.target.value})}
-                  className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">E-mail</label>
+                  <input 
+                    type="email" required
+                    value={editingClient.email}
+                    onChange={e => setEditingClient({...editingClient, email: e.target.value})}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-gray-700 mb-1">Telefone</label>
+                  <input 
+                    type="text" required
+                    value={editingClient.phone}
+                    onChange={e => setEditingClient({...editingClient, phone: e.target.value})}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none" 
+                  />
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-bold text-gray-700 mb-1">Saúde / Observações</label>

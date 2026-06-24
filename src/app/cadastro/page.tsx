@@ -13,6 +13,7 @@ export default function CadastroPage() {
   
   const [formData, setFormData] = useState({
     full_name: "",
+    email: "",
     cpf: "",
     rg: "",
     birth_date: "",
@@ -82,10 +83,10 @@ export default function CadastroPage() {
       // 0. Verifica Duplicidade
       const { data: existing } = await supabase.from('clients')
         .select('id')
-        .or(`cpf.eq.${formData.cpf},phone.eq.${formData.phone}`);
+        .or(`cpf.eq.${formData.cpf},phone.eq.${formData.phone},email.eq.${formData.email}`);
       
       if (existing && existing.length > 0) {
-        alert("Ops! Já existe um cadastro no nosso sistema com esse mesmo CPF ou Telefone.");
+        alert("Ops! Já existe um cadastro no nosso sistema com esse mesmo CPF, Email ou Telefone.");
         setIsLoading(false);
         return;
       }
@@ -116,6 +117,7 @@ export default function CadastroPage() {
       // 2. Save to Supabase
       const payload = {
         full_name: formData.full_name,
+        email: formData.email,
         cpf: formData.cpf,
         rg: formData.rg,
         birth_date: formData.birth_date,
@@ -242,6 +244,18 @@ export default function CadastroPage() {
                     onChange={e => setFormData({...formData, full_name: e.target.value})}
                     className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-[#F17B37] outline-none transition-all placeholder-gray-600" 
                     placeholder="João da Silva Pereira"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-bold text-gray-300 mb-2">E-mail</label>
+                  <input 
+                    type="email" 
+                    required
+                    value={formData.email}
+                    onChange={e => setFormData({...formData, email: e.target.value})}
+                    className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-[#F17B37] outline-none transition-all placeholder-gray-600" 
+                    placeholder="seuemail@exemplo.com"
                   />
                 </div>
 

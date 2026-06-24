@@ -36,6 +36,7 @@ export async function POST(request: Request) {
                 <tr><td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>RG:</strong></td><td style="padding: 10px; border-bottom: 1px solid #eee;">${client.rg}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Nascimento:</strong></td><td style="padding: 10px; border-bottom: 1px solid #eee;">${client.birth_date}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Telefone:</strong></td><td style="padding: 10px; border-bottom: 1px solid #eee;">${client.phone}</td></tr>
+                <tr><td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>E-mail:</strong></td><td style="padding: 10px; border-bottom: 1px solid #eee;">${client.email || 'Não informado'}</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Contato Emergência:</strong></td><td style="padding: 10px; border-bottom: 1px solid #eee;">${client.emergency_contact_name} (${client.emergency_contact_phone})</td></tr>
                 <tr><td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Notas de Saúde:</strong></td><td style="padding: 10px; border-bottom: 1px solid #eee; color: #d93025; font-weight: bold;">${client.health_notes}</td></tr>
               </table>
