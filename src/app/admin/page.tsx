@@ -27,9 +27,11 @@ export default function AdminPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [agendas, setAgendas] = useState<any[]>([]);
   const [globalViews, setGlobalViews] = useState<number>(0);
+  const [clients, setClients] = useState<any[]>([]);
   const [isFetching, setIsFetching] = useState(true);
   const [editingAgenda, setEditingAgenda] = useState<any>(null);
   
+  const [mainTab, setMainTab] = useState<'trilhas' | 'clientes'>('trilhas');
   const [activeTab, setActiveTab] = useState<'geral' | 'textos' | 'midias'>('geral');
 
   const [isFormattingMeetingPoint, setIsFormattingMeetingPoint] = useState(false);
@@ -63,6 +65,9 @@ export default function AdminPage() {
       
       const { data: statsData } = await supabase.from('global_stats').select('total_views').eq('id', 1).single();
       if (statsData) setGlobalViews(statsData.total_views || 0);
+
+      const { data: clientsData } = await supabase.from('clients').select('*').order('created_at', { ascending: false });
+      setClients(clientsData || []);
       
     } catch (error) {
       console.error("Erro ao buscar agendas:", error);
@@ -372,14 +377,30 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-28 md:pb-12 text-gray-900 relative">
-      <div className="p-4 md:p-12 max-w-6xl mx-auto space-y-6 md:space-y-8">
+      <div className="p-4 md:p-12 max-w-6xl mx-auto space-y-6">
         
-        <header className="space-y-1 md:space-y-2">
+        <header className="space-y-1 md:space-y-2 print:hidden">
           <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Painel da Administradora</h1>
-          <p className="text-sm md:text-base text-gray-500">Cadastre trilhas usando Inteligência Artificial.</p>
+          <p className="text-sm md:text-base text-gray-500">Gerencie suas trilhas, clientes e seguros.</p>
         </header>
 
-        <div className="grid lg:grid-cols-[1fr_400px] gap-6 md:gap-8">
+        <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 p-1 mb-6 print:hidden">
+          <button 
+            onClick={() => setMainTab('trilhas')} 
+            className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${mainTab === 'trilhas' ? 'bg-[#1D2A3A] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+          >
+            ⛰️ Trilhas
+          </button>
+          <button 
+            onClick={() => setMainTab('clientes')} 
+            className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${mainTab === 'clientes' ? 'bg-[#1D2A3A] text-white shadow-md' : 'text-gray-500 hover:bg-gray-50'}`}
+          >
+            👥 Clientes e Seguros
+          </button>
+        </div>
+
+        {mainTab === 'trilhas' ? (
+        <div className="grid lg:grid-cols-[1fr_400px] gap-6 md:gap-8 print:hidden">
           
           <div className={`bg-white rounded-2xl shadow-sm border transition-all ${editingAgenda ? 'border-orange-500 ring-4 ring-orange-500/10' : 'border-gray-100'} overflow-hidden`}>
             
@@ -697,8 +718,98 @@ export default function AdminPage() {
             </div>
 
           </div>
+        ) : (
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 md:p-8 animate-in fade-in duration-300">
+            <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8 gap-4 print:hidden">
+              <div>
+                <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2"><User className="text-[#F17B37]" /> Clientes & Seguros</h2>
+                <p className="text-gray-500 text-sm mt-1">Gerencie os formulários de saúde e seguro-aventura.</p>
+              </div>
+              <button 
+                onClick={() => window.print()}
+                className="bg-[#1D2A3A] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-gray-800 transition"
+              >
+                <FileText className="h-4 w-4" /> Imprimir Relatório para Seguradora
+              </button>
+            </div>
 
-        </div>
+            {/* Cabeçalho apenas visível na Impressão */}
+            <div className="hidden print:block mb-8 text-center border-b-2 border-black pb-4">
+              <h1 className="text-3xl font-black uppercase tracking-widest mb-2">Relatório de Seguros</h1>
+              <p className="text-gray-600">Mais Trilha Menos Estresse - Data de Emissão: {new Date().toLocaleDateString('pt-BR')}</p>
+            </div>
+
+            <div className="overflow-x-auto rounded-xl border border-gray-200">
+              <table className="w-full text-left text-sm whitespace-nowrap">
+                <thead className="bg-gray-100 text-gray-700">
+                  <tr>
+                    <th className="p-4 font-bold border-b print:border-black">Cliente</th>
+                    <th className="p-4 font-bold border-b print:border-black">Documentos</th>
+                    <th className="p-4 font-bold border-b print:border-black">Contato</th>
+                    <th className="p-4 font-bold border-b print:border-black">Emergência</th>
+                    <th className="p-4 font-bold border-b print:border-black w-1/4">Saúde / Observações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100 print:divide-black">
+                  {clients.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-gray-400">
+                        Nenhum cliente cadastrado ainda. Compartilhe o link <strong className="text-[#F17B37]">maistrilha.vercel.app/cadastro</strong>
+                      </td>
+                    </tr>
+                  ) : (
+                    clients.map(client => (
+                      <tr key={client.id} className="hover:bg-gray-50 transition-colors print:break-inside-avoid">
+                        <td className="p-4 flex items-center gap-3">
+                          {client.photo_url ? (
+                            <img src={client.photo_url} alt="Foto" className="h-10 w-10 rounded-full object-cover shrink-0 print:hidden border border-gray-200" />
+                          ) : (
+                            <div className="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center shrink-0 print:hidden">
+                              <User className="h-5 w-5 text-gray-400" />
+                            </div>
+                          )}
+                          <div>
+                            <p className="font-bold text-gray-900">{client.full_name}</p>
+                            <p className="text-xs text-gray-500">Nasc: {new Date(client.birth_date).toLocaleDateString('pt-BR')}</p>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <p className="text-gray-900"><strong>CPF:</strong> {client.cpf}</p>
+                          <p className="text-gray-500 text-xs mt-0.5"><strong>RG:</strong> {client.rg}</p>
+                        </td>
+                        <td className="p-4">
+                          <p className="text-gray-900">{client.phone}</p>
+                        </td>
+                        <td className="p-4">
+                          <p className="text-gray-900 font-medium">{client.emergency_contact_name}</p>
+                          <p className="text-gray-500 text-xs mt-0.5">{client.emergency_contact_phone}</p>
+                        </td>
+                        <td className="p-4 whitespace-normal min-w-[250px]">
+                          <span className={`text-xs font-bold px-2.5 py-1 rounded-md ${client.health_notes && client.health_notes.toLowerCase() !== 'nenhuma' ? 'bg-red-100 text-red-700 border border-red-200 print:border-red-700' : 'bg-gray-100 text-gray-600'}`}>
+                            {client.health_notes || "Nenhuma observação"}
+                          </span>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="mt-8 bg-blue-50 border border-blue-100 p-4 rounded-xl flex items-start gap-3 print:hidden">
+              <ShieldCheck className="h-6 w-6 text-blue-500 shrink-0" />
+              <div>
+                <p className="font-bold text-blue-900">Link Público de Cadastro</p>
+                <p className="text-sm text-blue-700 mb-2">Envie este link para as pessoas preencherem o formulário no celular:</p>
+                <a href="/cadastro" target="_blank" className="font-mono bg-white text-blue-600 px-3 py-1.5 rounded border border-blue-200 text-sm hover:bg-blue-600 hover:text-white transition">
+                  maistrilha.vercel.app/cadastro
+                </a>
+              </div>
+            </div>
+            
+          </div>
+        )}
+
       </div>
 
       {/* BOTÃO FLUTUANTE DO ASSISTENTE IA */}
