@@ -228,19 +228,34 @@ export default function WhatsAppAdmin() {
           {activeContact ? (
             <>
               {/* Header do Chat */}
-              <div className="bg-[#f0f2f5] px-4 py-2 border-b border-gray-300 flex items-center gap-3 shrink-0">
-                <button onClick={() => setActiveContact(null)} className="md:hidden p-2 text-gray-600 hover:bg-gray-200 rounded-full">
-                  <ArrowLeft className="w-5 h-5" />
-                </button>
-                {activeContact.photo_url ? (
-                  <img src={activeContact.photo_url} alt={activeContact.full_name} className="w-10 h-10 rounded-full object-cover" />
-                ) : (
-                  <UserCircle2 className="w-10 h-10 text-gray-400" />
-                )}
-                <div>
-                  <h2 className="text-[16px] font-semibold text-gray-900 leading-tight">{activeContact.full_name}</h2>
-                  <p className="text-[13px] text-gray-500">{activeContact.phone}</p>
+              <div className="bg-[#f0f2f5] px-4 py-2 border-b border-gray-300 flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-3">
+                  <button onClick={() => setActiveContact(null)} className="md:hidden p-2 text-gray-600 hover:bg-gray-200 rounded-full">
+                    <ArrowLeft className="w-5 h-5" />
+                  </button>
+                  {activeContact.photo_url ? (
+                    <img src={activeContact.photo_url} alt={activeContact.full_name} className="w-10 h-10 rounded-full object-cover" />
+                  ) : (
+                    <UserCircle2 className="w-10 h-10 text-gray-400" />
+                  )}
+                  <div>
+                    <h2 className="text-[16px] font-semibold text-gray-900 leading-tight">{activeContact.full_name}</h2>
+                    <p className="text-[13px] text-gray-500">{activeContact.phone}</p>
+                  </div>
                 </div>
+
+                <button 
+                  onClick={async () => {
+                    if(confirm(`Tem certeza que deseja apagar o histórico de mensagens de ${activeContact.full_name}?`)) {
+                      await supabase.from('whatsapp_messages').delete().eq('client_phone', activeContact.phone);
+                      setChatHistory([]);
+                    }
+                  }}
+                  title="Limpar Histórico" 
+                  className="p-2 text-gray-500 hover:bg-red-100 hover:text-red-500 rounded-full transition"
+                >
+                  <Eraser className="w-5 h-5" />
+                </button>
               </div>
 
               {/* Corpo do Chat */}
