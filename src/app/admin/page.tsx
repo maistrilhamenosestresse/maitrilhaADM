@@ -394,7 +394,7 @@ export default function AdminPage() {
                 agenda: newAgenda[0],
                 notifyGroup: data.notifyGroup,
                 notifyClients: data.notifyClients,
-                groupInvite: 'https://chat.whatsapp.com/KNXbACKaKtN8CubdE62jrD' // O link passado pela admin
+                groupInvite: 'https://chat.whatsapp.com/Ebfcdxv9Qm4Acfw91xb35r?s=hd&p=i&mlu=1' // Novo grupo de teste fornecido
               })
             });
             if (res.ok) alert("📣 Automação de WhatsApp disparada com sucesso!");
