@@ -58,12 +58,10 @@ const authMiddleware = (req, res, next) => {
 // UTILITÁRIOS E FILA ANTI-BAN (SUPABASE)
 // ---------------------------------------------------------
 function formatNumber(phone) {
-    // Remove tudo que não é número
-    let clean = String(phone).replace(/\D/g, ''); 
-    // Garante que comece com 55 (Brasil) se tiver tamanho DDD+Número
-    if (!clean.startsWith('55') && clean.length >= 10 && clean.length <= 11) {
-        clean = '55' + clean;
-    }
+    if (!phone) return '';
+    let clean = String(phone).replace(/\D/g, '');
+    // A pedido da administradora, não adicionaremos mais o 55 automaticamente.
+    // O número será usado exatamente com os dígitos (DDD + Número) que vierem do painel.
     return clean;
 }
 
@@ -100,6 +98,14 @@ async function safeSendMessage(phoneStr, message, mediaUrl = null) {
         // Fallback apenas se o WhatsApp recusou o número
         if (phoneStr.length === 13 && phoneStr.startsWith('55')) {
             const fallbackStr = phoneStr.substring(0, 4) + phoneStr.substring(5); 
+            const fallbackId = fallbackStr + '@c.us';
+            console.log(`[Send] WhatsApp recusou. Fallback ativado (removendo 9): tentando para ${fallbackId}...`);
+            
+            if (media) await sendWithTimeout(client.sendMessage(fallbackId, media, { caption: message || '' }));
+            else await sendWithTimeout(client.sendMessage(fallbackId, message || ''));
+            return fallbackId;
+        } else if (phoneStr.length === 11 && !phoneStr.startsWith('55')) {
+            const fallbackStr = phoneStr.substring(0, 2) + phoneStr.substring(3); 
             const fallbackId = fallbackStr + '@c.us';
             console.log(`[Send] WhatsApp recusou. Fallback ativado (removendo 9): tentando para ${fallbackId}...`);
             
