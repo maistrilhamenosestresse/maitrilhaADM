@@ -67,13 +67,53 @@ function formatNumber(phone) {
     return clean;
 }
 
+const sendWithTimeout = (promise, ms = 10000) => {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout de comunicação (o WhatsApp Web demorou muito).')), ms))
+    ]);
+};
+
+async function safeSendMessage(phoneStr, message, mediaUrl = null) {
+    let targetId = phoneStr + '@c.us';
+    let media = null;
+    
+    // Se for URL válida, tenta baixar
+    if (mediaUrl && mediaUrl.startsWith('http')) {
+        try {
+            media = await MessageMedia.fromUrl(mediaUrl);
+        } catch(e) {
+            console.error('Erro ao baixar mídia:', e.message);
+        }
+    }
+
+    try {
+        if (media) await sendWithTimeout(client.sendMessage(targetId, media, { caption: message || '' }));
+        else await sendWithTimeout(client.sendMessage(targetId, message || ''));
+        return targetId;
+    } catch (e) {
+        // Fallback Inteligente do 9º dígito (Brasil)
+        // Se tiver 13 dígitos (55 + DDD + 9 + 8 digitos)
+        if (phoneStr.length === 13 && phoneStr.startsWith('55')) {
+            const fallbackStr = phoneStr.substring(0, 4) + phoneStr.substring(5); // Remove o 5º caractere (o 9)
+            const fallbackId = fallbackStr + '@c.us';
+            console.log(`[Queue] Fallback ativado (removendo 9): ${fallbackId}`);
+            
+            if (media) await sendWithTimeout(client.sendMessage(fallbackId, media, { caption: message || '' }));
+            else await sendWithTimeout(client.sendMessage(fallbackId, message || ''));
+            return fallbackId;
+        }
+        throw e;
+    }
+}
+
 let isBroadcasting = false;
 
 // Rotina que varre o Supabase a cada 15 segundos buscando mensagens agendadas
 async function pollSupabaseQueue() {
     if (isBroadcasting || !isClientReady || !supabase) return;
     
-    // Busca mensagens pendentes e que o horário agendado já chegou
+    // Busca mensagens pendentes
     const { data: messages, error } = await supabase
         .from('whatsapp_messages')
         .select('*')
@@ -97,32 +137,17 @@ async function pollSupabaseQueue() {
         try {
             const cleanPhone = formatNumber(task.client_phone);
             
-            // VERIFICAÇÃO INTELIGENTE DO WHATSAPP (Resolve o problema do 9º dígito)
-            const numberDetails = await client.getNumberId(cleanPhone);
+            // Envio Seguro com Fallback e Timeout (SEM getNumberId)
+            const finalId = await safeSendMessage(cleanPhone, task.message, task.media_url);
             
-            if (!numberDetails) {
-                throw new Error('O número não possui WhatsApp registrado.');
-            }
-
-            const targetId = numberDetails._serialized;
-            
-            if (task.media_url) {
-                const media = await MessageMedia.fromUrl(task.media_url);
-                await client.sendMessage(targetId, media, { caption: task.message });
-            } else {
-                await client.sendMessage(targetId, task.message);
-            }
-            
-            console.log(`[Queue] Mensagem enviada com sucesso para ${targetId}`);
-            
-            // Marca como enviada
+            console.log(`[Queue] Mensagem enviada com sucesso para ${finalId}`);
             await supabase.from('whatsapp_messages').update({ status: 'sent' }).eq('id', task.id);
         } catch (err) {
             console.log(`[Queue] Erro ao enviar para ${task.client_phone}:`, err.message);
             await supabase.from('whatsapp_messages').update({ status: 'error', error_log: err.message }).eq('id', task.id);
         }
         
-        // Delay anti-ban reduzido (15 segundos) entre envios do mesmo lote
+        // Delay anti-ban reduzido (15 segundos)
         if (i < messages.length - 1) {
             console.log(`[Queue] Pausa Anti-Ban de 15 segundos...`);
             await new Promise(resolve => setTimeout(resolve, 15000));
@@ -165,33 +190,12 @@ app.post('/api/send/individual', authMiddleware, async (req, res) => {
 
     const cleanPhone = formatNumber(phone);
     
-    // Tenta enviar com máximo de 2 tentativas (Resiliência contra Timeout)
-    for (let tentativa = 1; tentativa <= 2; tentativa++) {
-        try {
-            const numberDetails = await client.getNumberId(cleanPhone);
-            if (!numberDetails) {
-                return res.status(400).json({ error: 'Número inválido ou sem WhatsApp ativo.' });
-            }
-            
-            const targetId = numberDetails._serialized;
-            
-            if (media_url) {
-                const media = await MessageMedia.fromUrl(media_url);
-                await client.sendMessage(targetId, media, { caption: message || '' });
-            } else {
-                await client.sendMessage(targetId, message);
-            }
-
-            return res.json({ success: true, formattedPhone: targetId });
-            
-        } catch (error) {
-            console.error(`Erro envio individual [Tentativa ${tentativa}]:`, error.message);
-            if (tentativa === 2) {
-                return res.status(500).json({ error: error.message });
-            }
-            // Aguarda 2 segundos antes do retry
-            await new Promise(r => setTimeout(r, 2000));
-        }
+    try {
+        const finalId = await safeSendMessage(cleanPhone, message, media_url);
+        return res.json({ success: true, formattedPhone: finalId });
+    } catch (error) {
+        console.error(`Erro envio individual imediato:`, error.message);
+        return res.status(500).json({ error: error.message });
     }
 });
 
