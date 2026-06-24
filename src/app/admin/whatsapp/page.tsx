@@ -166,22 +166,26 @@ export default function WhatsAppAdmin() {
 
       const { error } = await supabase.from('whatsapp_messages').insert(payload);
 
-    if (error) {
-      alert("Erro ao agendar campanha: " + error.message);
-    } else {
-      setBroadcastMessage('');
-      setIsBroadcastModalOpen(false);
-      alert(`✅ Campanha enviada para a Fila do Robô! ${payload.length} clientes receberão a mensagem.`);
-      setBroadcastMediaFile(null);
-      
-      // Força o robô a puxar a fila agora
-      fetch('/api/whatsapp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'trigger' })
-      }).catch(() => {});
+      if (error) {
+        alert("Erro ao agendar campanha: " + error.message);
+      } else {
+        setBroadcastMessage('');
+        setIsBroadcastModalOpen(false);
+        alert(`✅ Campanha enviada para a Fila do Robô! ${payload.length} clientes receberão a mensagem.`);
+        setBroadcastMediaFile(null);
+        
+        // Força o robô a puxar a fila agora
+        fetch('/api/whatsapp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'trigger' })
+        }).catch(() => {});
+      }
+    } catch (error: any) {
+      alert("Erro no envio em massa: " + error.message);
+    } finally {
+      setIsSending(false);
     }
-    setIsSending(false);
   };
 
   return (
