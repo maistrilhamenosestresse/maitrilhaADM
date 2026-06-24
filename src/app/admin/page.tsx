@@ -15,6 +15,8 @@ type AgendaForm = {
   flyer: FileList;
   images: FileList;
   video: FileList;
+  notifyGroup: boolean;
+  notifyClients: boolean;
 };
 
 type ChatMessage = {
@@ -378,9 +380,30 @@ export default function AdminPage() {
         alert("Trilha atualizada com sucesso!");
         cancelEdit();
       } else {
-        const { error: insertError } = await supabase.from('agendas').insert([payload]);
+        const { data: newAgenda, error: insertError } = await supabase.from('agendas').insert([payload]).select();
         if (insertError) throw insertError;
         alert("Trilha cadastrada com sucesso!");
+        
+        // Automação de WhatsApp (Disparo para Grupo e Base)
+        if (data.notifyGroup || data.notifyClients) {
+          try {
+            const res = await fetch('/api/whatsapp/campaign', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                agenda: newAgenda[0],
+                notifyGroup: data.notifyGroup,
+                notifyClients: data.notifyClients,
+                groupInvite: 'https://chat.whatsapp.com/KNXbACKaKtN8CubdE62jrD' // O link passado pela admin
+              })
+            });
+            if (res.ok) alert("📣 Automação de WhatsApp disparada com sucesso!");
+          } catch (e) {
+            console.error("Erro na automação do WhatsApp", e);
+            alert("A trilha foi criada, mas houve um erro ao disparar no WhatsApp.");
+          }
+        }
+        
         reset();
       }
       
@@ -526,6 +549,26 @@ export default function AdminPage() {
                     <p className="text-sm text-orange-800">
                       Preencheu tudo aqui? Clique na aba <strong>Áudio e Textos</strong> lá no topo para continuar preenchendo a sua trilha com a IA.
                     </p>
+                  </div>
+                  
+                  <div className="mt-4 border-t border-gray-100 pt-4">
+                    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><Bot className="w-4 h-4 text-green-600"/> Automação de WhatsApp (Opcional)</h3>
+                    <div className="space-y-3">
+                      <label className="flex items-start gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition border border-gray-200">
+                        <input type="checkbox" {...register("notifyGroup")} className="mt-0.5 w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
+                        <div>
+                          <p className="text-sm font-bold text-gray-800">Anunciar no Grupo Oficial</p>
+                          <p className="text-xs text-gray-500">O robô mandará um aviso com o link de inscrição no grupo principal.</p>
+                        </div>
+                      </label>
+                      <label className="flex items-start gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition border border-gray-200">
+                        <input type="checkbox" {...register("notifyClients")} className="mt-0.5 w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
+                        <div>
+                          <p className="text-sm font-bold text-gray-800">Disparo em Massa (Privado)</p>
+                          <p className="text-xs text-gray-500">Agendar mensagem individual para toda a base de clientes avisando da nova trilha.</p>
+                        </div>
+                      </label>
+                    </div>
                   </div>
                 </div>
               )}

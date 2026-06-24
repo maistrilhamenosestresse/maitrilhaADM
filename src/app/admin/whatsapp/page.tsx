@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase';
-import { ArrowLeft, Send, AlertCircle, CheckCircle2, Search, UserCircle2, Megaphone, Loader2 } from 'lucide-react';
+import { ArrowLeft, Send, AlertCircle, CheckCircle2, Search, UserCircle2, Megaphone, Loader2, Eraser, Paperclip, X, Image as ImageIcon } from 'lucide-react';
 import Link from 'next/link';
 
 export default function WhatsAppAdmin() {
@@ -21,6 +21,18 @@ export default function WhatsAppAdmin() {
   // Broadcast Modal State
   const [isBroadcastModalOpen, setIsBroadcastModalOpen] = useState(false);
   const [broadcastMessage, setBroadcastMessage] = useState('');
+  const [broadcastMediaFile, setBroadcastMediaFile] = useState<File | null>(null);
+
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+
+  const uploadMedia = async (file: File) => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `chat_${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`;
+    const { error } = await supabase.storage.from('fotos_agendas').upload(fileName, file);
+    if (error) throw error;
+    const { data } = supabase.storage.from('fotos_agendas').getPublicUrl(fileName);
+    return data.publicUrl;
+  };
 
   useEffect(() => {
     checkStatus();
@@ -82,18 +94,25 @@ export default function WhatsAppAdmin() {
   // Envio Instantâneo de 1 pra 1
   const handleSendIndividual = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!messageText.trim() || !activeContact) return;
+    if ((!messageText.trim() && !mediaFile) || !activeContact) return;
 
     const tempMessage = messageText;
+    const tempFile = mediaFile;
     setMessageText('');
+    setMediaFile(null);
     setIsSending(true);
 
     try {
+      let media_url = null;
+      if (tempFile) {
+        media_url = await uploadMedia(tempFile);
+      }
+
       // 1. Dispara instantaneamente pela rota individual
       const res = await fetch('/api/whatsapp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'individual', phone: activeContact.phone, message: tempMessage })
+        body: JSON.stringify({ action: 'individual', phone: activeContact.phone, message: tempMessage, media_url })
       });
       const data = await res.json();
 
@@ -104,6 +123,7 @@ export default function WhatsAppAdmin() {
         client_name: activeContact.full_name,
         client_phone: activeContact.phone,
         message: tempMessage,
+        media_url: media_url,
         status: 'sent'
       }]);
 
@@ -115,6 +135,7 @@ export default function WhatsAppAdmin() {
         client_name: activeContact.full_name,
         client_phone: activeContact.phone,
         message: tempMessage,
+        media_url: tempFile ? 'error_upload' : null,
         status: 'error',
         error_log: error.message
       }]);
@@ -126,17 +147,24 @@ export default function WhatsAppAdmin() {
 
   // Envio em Massa (Megafone) -> Vai para a Fila
   const handleBroadcast = async () => {
-    if (!broadcastMessage.trim()) return alert('Digite a mensagem da campanha.');
+    if (!broadcastMessage.trim() && !broadcastMediaFile) return alert('Digite a mensagem ou anexe um arquivo para a campanha.');
     setIsSending(true);
 
-    const payload = clients.map(client => ({
-      client_name: client.full_name,
-      client_phone: client.phone,
-      message: broadcastMessage,
-      status: 'pending'
-    }));
+    try {
+      let media_url = null;
+      if (broadcastMediaFile) {
+        media_url = await uploadMedia(broadcastMediaFile);
+      }
 
-    const { error } = await supabase.from('whatsapp_messages').insert(payload);
+      const payload = clients.map(client => ({
+        client_name: client.full_name,
+        client_phone: client.phone,
+        message: broadcastMessage,
+        media_url: media_url,
+        status: 'pending'
+      }));
+
+      const { error } = await supabase.from('whatsapp_messages').insert(payload);
 
     if (error) {
       alert("Erro ao agendar campanha: " + error.message);
@@ -144,6 +172,7 @@ export default function WhatsAppAdmin() {
       setBroadcastMessage('');
       setIsBroadcastModalOpen(false);
       alert(`✅ Campanha enviada para a Fila do Robô! ${payload.length} clientes receberão a mensagem.`);
+      setBroadcastMediaFile(null);
       
       // Força o robô a puxar a fila agora
       fetch('/api/whatsapp', {
@@ -267,7 +296,12 @@ export default function WhatsAppAdmin() {
                 ) : (
                   chatHistory.map((msg) => (
                     <div key={msg.id} className="self-end bg-[#dcf8c6] max-w-[85%] md:max-w-[70%] rounded-lg p-2 shadow-sm flex flex-col relative">
-                      <p className="text-[14px] text-gray-900 whitespace-pre-wrap">{msg.message}</p>
+                      {msg.media_url && (
+                        <a href={msg.media_url} target="_blank" rel="noreferrer">
+                          <img src={msg.media_url} className="rounded-lg mb-1 w-full max-h-48 object-cover border border-[#c4e3a8]" />
+                        </a>
+                      )}
+                      {msg.message && <p className="text-[14px] text-gray-900 whitespace-pre-wrap">{msg.message}</p>}
                       <div className="flex items-center justify-end gap-1 mt-1 text-[10px] text-gray-500">
                         <span>{new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                         {msg.status === 'sent' ? (
@@ -284,27 +318,67 @@ export default function WhatsAppAdmin() {
               </div>
 
               {/* Input de Mensagem */}
-              <form onSubmit={handleSendIndividual} className="bg-[#f0f2f5] p-3 flex items-end gap-2 shrink-0">
-                <textarea 
-                  rows={1}
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendIndividual(e);
-                    }
-                  }}
-                  placeholder="Mensagem"
-                  className="flex-1 bg-white border border-gray-300 rounded-2xl px-4 py-2 text-[15px] focus:outline-none focus:border-[#00a884] resize-none max-h-32 custom-scrollbar"
-                />
-                <button 
-                  type="submit"
-                  disabled={isSending || !messageText.trim()}
-                  className="bg-[#00a884] hover:bg-[#01886a] text-white p-3 rounded-full transition disabled:opacity-50 shrink-0"
-                >
-                  {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-                </button>
+              <form onSubmit={handleSendIndividual} className="bg-[#f0f2f5] p-3 shrink-0 flex flex-col gap-2">
+                {mediaFile && (
+                  <div className="relative inline-block self-start p-2 bg-white rounded-lg shadow-sm border border-gray-200">
+                    <button 
+                      type="button" 
+                      onClick={() => setMediaFile(null)} 
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-0.5 shadow-md hover:bg-red-600 z-10"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                    {mediaFile.type.startsWith('image/') ? (
+                      <img src={URL.createObjectURL(mediaFile)} alt="Anexo" className="h-16 w-16 object-cover rounded" />
+                    ) : (
+                      <div className="h-16 w-16 bg-gray-100 rounded flex items-center justify-center flex-col text-[10px] text-gray-500">
+                        <ImageIcon className="w-6 h-6 mb-1 text-gray-400" />
+                        Arquivo
+                      </div>
+                    )}
+                  </div>
+                )}
+                
+                <div className="flex items-end gap-2 w-full">
+                  <label className="cursor-pointer p-3 text-gray-500 hover:text-gray-700 transition self-center">
+                    <Paperclip className="w-5 h-5" />
+                    <input 
+                      type="file" 
+                      accept="image/*,video/mp4,application/pdf"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          if(e.target.files[0].size > 16 * 1024 * 1024) {
+                            alert("O arquivo não pode ter mais de 16MB.");
+                            return;
+                          }
+                          setMediaFile(e.target.files[0]);
+                        }
+                      }} 
+                      className="hidden" 
+                    />
+                  </label>
+                  
+                  <textarea 
+                    rows={1}
+                    value={messageText}
+                    onChange={(e) => setMessageText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendIndividual(e);
+                      }
+                    }}
+                    placeholder="Mensagem"
+                    className="flex-1 bg-white border border-gray-300 rounded-2xl px-4 py-2 text-[15px] focus:outline-none focus:border-[#00a884] resize-none max-h-32 custom-scrollbar"
+                  />
+                  <button 
+                    type="submit"
+                    disabled={isSending || (!messageText.trim() && !mediaFile)}
+                    className="bg-[#00a884] hover:bg-[#01886a] text-white p-3 rounded-full transition disabled:opacity-50 shrink-0 self-center"
+                  >
+                    {isSending ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                  </button>
+                </div>
               </form>
             </>
           ) : (
@@ -329,12 +403,30 @@ export default function WhatsAppAdmin() {
             <p className="text-sm text-gray-500 mb-4">Esta mensagem será enviada para **todos** os {clients.length} clientes cadastrados, com intervalo de 15 segundos entre cada envio para evitar banimento.</p>
             
             <textarea 
-              rows={6}
+              rows={4}
               value={broadcastMessage}
               onChange={(e) => setBroadcastMessage(e.target.value)}
               placeholder="Digite a mensagem da campanha aqui..."
               className="w-full bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#00a884] mb-4"
             />
+            
+            <div className="mb-4">
+              <label className="block text-sm font-bold text-gray-700 mb-2">Anexar Arquivo (Opcional)</label>
+              <input 
+                type="file" 
+                accept="image/*,video/mp4,application/pdf"
+                onChange={(e) => {
+                  if (e.target.files && e.target.files[0]) {
+                    if(e.target.files[0].size > 16 * 1024 * 1024) {
+                      alert("O arquivo não pode ter mais de 16MB.");
+                      return;
+                    }
+                    setBroadcastMediaFile(e.target.files[0]);
+                  }
+                }} 
+                className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100"
+              />
+            </div>
             
             <div className="flex gap-2 justify-end">
               <button 
@@ -345,7 +437,7 @@ export default function WhatsAppAdmin() {
               </button>
               <button 
                 onClick={handleBroadcast}
-                disabled={isSending || !broadcastMessage.trim()}
+                disabled={isSending || (!broadcastMessage.trim() && !broadcastMediaFile)}
                 className="px-6 py-2 bg-[#00a884] text-white font-bold rounded-lg flex items-center gap-2 hover:bg-[#01886a] disabled:opacity-50"
               >
                 {isSending ? 'Processando...' : 'Iniciar Disparo'}
