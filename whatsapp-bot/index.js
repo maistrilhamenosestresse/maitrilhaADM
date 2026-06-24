@@ -78,11 +78,9 @@ const sendWithTimeout = (promise, ms = 45000) => {
 async function safeSendMessage(phoneStr, message, mediaUrl = null) {
     let clean = String(phoneStr).replace(/\D/g, '');
     
-    // REMOÇÃO FORÇADA DO DDI:
-    // Se o número veio do banco de dados já com o 55 na frente, nós removemos ele aqui!
-    // Queremos passar apenas o DDD + Número (ex: 31999567681) para o getNumberId.
-    if (clean.startsWith('55') && (clean.length === 12 || clean.length === 13)) {
-        clean = clean.substring(2);
+    // Adiciona o DDI 55 (obrigatório para o Meta) se for um número do Brasil (10 ou 11 dígitos)
+    if (clean.length === 10 || clean.length === 11) {
+        clean = '55' + clean;
     }
 
     let media = null;
