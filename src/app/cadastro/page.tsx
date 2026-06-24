@@ -107,8 +107,9 @@ export default function CadastroPage() {
       setIsSuccess(true);
       
     } catch (error: any) {
-      console.error(error);
-      alert("Ocorreu um erro ao enviar o cadastro: " + error.message);
+      console.error("Erro completo:", error);
+      const errorMessage = error.message || error.error_description || (typeof error === 'object' ? JSON.stringify(error) : String(error));
+      alert("Ocorreu um erro ao enviar o cadastro: " + errorMessage);
     } finally {
       setIsLoading(false);
     }
