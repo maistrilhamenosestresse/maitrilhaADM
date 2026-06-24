@@ -88,35 +88,51 @@ async function safeSendMessage(phoneStr, message, mediaUrl = null) {
     }
 
     try {
+        console.log(`[Send] Verificando se ${targetId} existe no WhatsApp...`);
+        const isRegistered = await sendWithTimeout(client.isRegisteredUser(targetId), 15000);
+        
+        if (!isRegistered) {
+            throw new Error('NotRegistered');
+        }
+
         console.log(`[Send] Tentando enviar para ${targetId}...`);
         if (media) await sendWithTimeout(client.sendMessage(targetId, media, { caption: message || '' }));
         else await sendWithTimeout(client.sendMessage(targetId, message || ''));
         return targetId;
     } catch (e) {
-        // Se o erro foi um Timeout, o WhatsApp não recusou o número, ele apenas engasgou. Repassa o erro direto.
-        if (e.message && e.message.includes('Timeout')) {
+        if (e.message && e.message.includes('Timeout') && !e.message.includes('NotRegistered')) {
             throw e;
         }
 
-        // Fallback apenas se o WhatsApp recusou o número
         if (phoneStr.length === 13 && phoneStr.startsWith('55')) {
             const fallbackStr = phoneStr.substring(0, 4) + phoneStr.substring(5); 
             const fallbackId = fallbackStr + '@c.us';
-            console.log(`[Send] WhatsApp recusou. Fallback ativado (removendo 9): tentando para ${fallbackId}...`);
+            console.log(`[Send] WhatsApp recusou. Fallback ativado (removendo 9): verificando ${fallbackId}...`);
             
+            const isRegisteredFallback = await sendWithTimeout(client.isRegisteredUser(fallbackId), 15000).catch(()=>false);
+            if (!isRegisteredFallback) {
+                throw new Error(`Número inválido ou sem WhatsApp ativo: ${phoneStr}`);
+            }
+
             if (media) await sendWithTimeout(client.sendMessage(fallbackId, media, { caption: message || '' }));
             else await sendWithTimeout(client.sendMessage(fallbackId, message || ''));
             return fallbackId;
         } else if (phoneStr.length === 11 && !phoneStr.startsWith('55')) {
             const fallbackStr = phoneStr.substring(0, 2) + phoneStr.substring(3); 
             const fallbackId = fallbackStr + '@c.us';
-            console.log(`[Send] WhatsApp recusou. Fallback ativado (removendo 9): tentando para ${fallbackId}...`);
+            console.log(`[Send] WhatsApp recusou. Fallback ativado (removendo 9): verificando ${fallbackId}...`);
             
+            const isRegisteredFallback = await sendWithTimeout(client.isRegisteredUser(fallbackId), 15000).catch(()=>false);
+            if (!isRegisteredFallback) {
+                throw new Error(`Número inválido ou sem WhatsApp ativo: ${phoneStr}`);
+            }
+
             if (media) await sendWithTimeout(client.sendMessage(fallbackId, media, { caption: message || '' }));
             else await sendWithTimeout(client.sendMessage(fallbackId, message || ''));
             return fallbackId;
         }
-        throw e;
+        
+        throw new Error(e.message === 'NotRegistered' ? 'Número inválido ou sem WhatsApp ativo.' : e.message);
     }
 }
 
