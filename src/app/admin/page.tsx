@@ -831,6 +831,14 @@ export default function AdminPage() {
                         </td>
                         <td className="p-4 print:hidden">
                           <div className="flex items-center justify-center gap-2">
+                            <a 
+                              href={`/admin/termo/${client.id}`}
+                              target="_blank"
+                              className="p-2 text-gray-400 hover:text-[#F17B37] hover:bg-[#F17B37]/10 rounded-lg transition-colors"
+                              title="Ver Termo Assinado"
+                            >
+                              <FileText className="h-4 w-4" />
+                            </a>
                             <button 
                               onClick={() => setEditingClient(client)}
                               className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
