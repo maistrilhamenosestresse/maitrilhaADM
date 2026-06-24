@@ -21,9 +21,9 @@ export async function POST(req: Request) {
     if (action === 'individual') {
       endpoint = '/api/send/individual';
       payload = { phone, message };
-    } else if (action === 'broadcast') {
-      endpoint = '/api/send/broadcast';
-      payload = { contacts, message };
+    } else if (action === 'trigger') {
+      endpoint = '/api/trigger-queue';
+      payload = {};
     } else {
       return NextResponse.json({ error: 'Ação inválida.' }, { status: 400 });
     }

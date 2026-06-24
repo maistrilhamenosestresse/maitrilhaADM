@@ -102,6 +102,15 @@ export default function WhatsAppAdmin() {
       setSelectedClients(new Set());
       alert(`✅ ${payload.length} mensagens enviadas para a Fila do Robô!`);
       loadQueue();
+      
+      // Se não foi agendado para o futuro, força o robô a puxar agora
+      if (!scheduleDate || new Date(scheduleDate).getTime() <= Date.now()) {
+        fetch('/api/whatsapp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'trigger' })
+        }).catch(() => {});
+      }
     }
 
     setIsSending(false);
@@ -262,12 +271,22 @@ export default function WhatsAppAdmin() {
                             msg.status === 'error' ? 'bg-red-100 text-red-700' :
                             'bg-yellow-100 text-yellow-700'
                           }`}>
-                            {msg.status === 'sent' ? '✅ Enviado' : msg.status === 'error' ? '❌ Erro' : '⏳ Na Fila (Aguardando)'}
+                            {msg.status === 'sent' ? '✅ Enviado' : msg.status === 'error' ? '❌ Erro' : '⏳ Na Fila'}
                           </span>
                           
-                          {msg.status === 'error' && (
-                            <span className="text-[10px] text-red-500 max-w-[150px] truncate" title={msg.error_log}>{msg.error_log}</span>
-                          )}
+                          <div className="flex items-center gap-2">
+                            {msg.status === 'error' && (
+                              <span className="text-[10px] text-red-500 max-w-[150px] truncate" title={msg.error_log}>{msg.error_log}</span>
+                            )}
+                            <a 
+                              href={`https://wa.me/55${msg.client_phone.replace(/\D/g, '')}`} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-xs font-bold text-[#00a884] hover:underline flex items-center gap-1"
+                            >
+                              <MessageCircle className="w-3 h-3" /> Conversar
+                            </a>
+                          </div>
                         </div>
                       </div>
                     ))

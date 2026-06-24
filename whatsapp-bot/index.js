@@ -115,8 +115,8 @@ async function pollSupabaseQueue() {
     console.log('[Queue] Lote finalizado!');
 }
 
-// Inicia o "Motor de Busca" a cada 60 segundos
-setInterval(pollSupabaseQueue, 60000);
+// Inicia o "Motor de Busca" a cada 15 segundos para ser mais ágil
+setInterval(pollSupabaseQueue, 15000);
 
 
 // ---------------------------------------------------------
@@ -129,6 +129,13 @@ app.get('/api/status', authMiddleware, async (req, res) => {
         online: isClientReady,
         is_broadcasting: isBroadcasting
     });
+});
+
+// Força o robô a puxar a fila imediatamente (Usado pela Vercel após agendar)
+app.post('/api/trigger-queue', authMiddleware, async (req, res) => {
+    if (!isClientReady || isBroadcasting) return res.json({ success: true, message: 'Fila já está rodando ou robô offline.' });
+    pollSupabaseQueue();
+    res.json({ success: true, message: 'Fila disparada com sucesso!' });
 });
 
 // Envio Individual Imediato (Sem ir para o banco, ex: Recibo do Checkout)
