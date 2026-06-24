@@ -173,16 +173,16 @@ export default function CadastroPage() {
         })
       }).catch(err => console.error("Erro ignorado de email", err));
 
-      // 4. Disparo automático do WhatsApp
-      await fetch('/api/whatsapp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'individual',
-          phone: savedClient.phone,
-          message: `Olá *${savedClient.full_name.split(' ')[0]}*! Recebemos seu cadastro e Termo de Responsabilidade com sucesso.\n\nBem-vindo(a) à aventura com a *Mais Trilha Menos Estresse*! 🏕️🥾\n\nEm breve enviaremos as orientações e horários no grupo oficial. Salve nosso contato!`
-        })
-      }).catch(err => console.error("Erro ignorado do WhatsApp API", err));
+      // 4. Disparo automático do E-mail de Boas-Vindas com o PDF do Seguro
+      if (savedClient.email) {
+        await fetch('/api/send-client-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ client: savedClient })
+        }).catch(err => console.error("Erro ignorado do Email Cliente", err));
+      } else {
+        console.warn("Cliente não forneceu e-mail, pulando disparo do PDF.");
+      }
 
       setIsSuccess(true);
       

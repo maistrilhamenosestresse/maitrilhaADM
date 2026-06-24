@@ -384,26 +384,6 @@ export default function AdminPage() {
         if (insertError) throw insertError;
         alert("Trilha cadastrada com sucesso!");
         
-        // Automação de WhatsApp (Disparo para Grupo e Base)
-        if (data.notifyGroup || data.notifyClients) {
-          try {
-            const res = await fetch('/api/whatsapp/campaign', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                agenda: newAgenda[0],
-                notifyGroup: data.notifyGroup,
-                notifyClients: data.notifyClients,
-                groupInvite: 'https://chat.whatsapp.com/Ebfcdxv9Qm4Acfw91xb35r?s=hd&p=i&mlu=1' // Novo grupo de teste fornecido
-              })
-            });
-            if (res.ok) alert("📣 Automação de WhatsApp disparada com sucesso!");
-          } catch (e) {
-            console.error("Erro na automação do WhatsApp", e);
-            alert("A trilha foi criada, mas houve um erro ao disparar no WhatsApp.");
-          }
-        }
-        
         reset();
       }
       
@@ -443,10 +423,6 @@ export default function AdminPage() {
             <p className="text-sm md:text-base text-gray-500">Gerencie suas trilhas, clientes e seguros.</p>
           </div>
           <div className="flex gap-2">
-            <a href="/admin/whatsapp" className="flex items-center gap-2 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold py-2.5 px-5 rounded-xl transition-colors shadow-sm text-sm">
-              <MessageSquare className="w-5 h-5" />
-              <span>Central do WhatsApp</span>
-            </a>
           </div>
         </header>
 
@@ -551,36 +527,6 @@ export default function AdminPage() {
                     </p>
                   </div>
                   
-                  <div className="mt-4 border-t border-gray-100 pt-4">
-                    <h3 className="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2"><Bot className="w-4 h-4 text-green-600"/> Automação de WhatsApp (Opcional)</h3>
-                    <div className="space-y-3">
-                      <label className="flex items-start gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition border border-gray-200">
-                        <input type="checkbox" {...register("notifyGroup")} className="mt-0.5 w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
-                        <div>
-                          <p className="text-sm font-bold text-gray-800">Anunciar no Grupo Oficial</p>
-                          <p className="text-xs text-gray-500">O robô mandará um aviso com o link de inscrição no grupo principal.</p>
-                        </div>
-                      </label>
-                      <label className="flex items-start gap-3 p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition border border-gray-200">
-                        <input type="checkbox" {...register("notifyClients")} className="mt-0.5 w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500" />
-                        <div>
-                          <p className="text-sm font-bold text-gray-800">Disparo em Massa (Privado)</p>
-                          <p className="text-xs text-gray-500">Agendar mensagem individual para toda a base de clientes avisando da nova trilha.</p>
-                        </div>
-                      </label>
-                    </div>
-
-                    {(watch("notifyGroup") || watch("notifyClients")) && (
-                      <div className="mt-4 p-4 bg-[#e5ddd5] rounded-xl border border-gray-200 relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-full opacity-10 bg-[url('https://i.pinimg.com/736x/8c/98/99/8c98994518b575bfd8c949e91d20548b.jpg')] bg-repeat"></div>
-                        <p className="text-xs font-bold text-gray-600 mb-2 relative z-10 flex items-center gap-1"><Eye className="w-3 h-3"/> Prévia da Mensagem (Segurança)</p>
-                        <div className="bg-[#dcf8c6] rounded-lg p-3 text-sm text-gray-900 shadow-sm relative z-10 w-[90%] md:w-[80%] whitespace-pre-wrap">
-                          {`🏕️ *NOVA TRILHA DISPONÍVEL!* 🥾\n\nPrepare sua mochila, porque a nossa nova aventura já está confirmada:\n\n⛰️ *${watch("title") || 'Nome da Trilha'}*\n📅 Data: ${(watch("date") || 'YYYY-MM-DD').split('-').reverse().join('/')}\n💰 Valor: R$ ${(watch("price") || '0.00').replace('.', ',')}\n\n👉 *Garanta sua vaga agora mesmo no link oficial:*\nhttps://maistrilha.vercel.app/agenda\n\nA natureza chama! Vem com a Mais Trilha Menos Estresse! 🌿`}
-                        </div>
-                        <p className="text-[10px] text-gray-500 mt-2 relative z-10">* A foto da trilha (Flyer) será anexada automaticamente acima deste texto.</p>
-                      </div>
-                    )}
-                  </div>
                 </div>
               )}
 
