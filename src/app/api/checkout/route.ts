@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { reserva_id, agenda_title, price, customer } = await request.json();
+    const { reserva_id, agenda_id, agenda_title, price, customer } = await request.json();
 
     if (!reserva_id || !price) {
       return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     const payload = {
       handle: infiniteTag,
       // Usaremos a própria URL base do site atual para o webhook dinamicamente
-      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/agenda`,
+      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/sucesso?agenda_id=${agenda_id || reserva_id}`,
       webhook_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/webhooks/infinitepay`,
       order_nsu: order_nsu,
       customer: customer,

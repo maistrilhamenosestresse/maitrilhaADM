@@ -160,6 +160,7 @@ function CheckoutAuthContent() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           reserva_id: reservaId,
+          agenda_id: agendaId,
           agenda_title: agenda?.title || 'Trilha',
           price: agenda?.price || 0,
           customer: {

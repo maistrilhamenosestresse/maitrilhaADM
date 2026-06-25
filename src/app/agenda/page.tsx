@@ -33,7 +33,7 @@ export default function AgendaList() {
 
       const { data, error } = await supabase
         .from('agendas')
-        .select('*')
+        .select('*, reservas(status_pagamento)')
         .gte('date', today)
         .order('date', { ascending: true });
         
@@ -103,52 +103,70 @@ export default function AgendaList() {
               const day = eventDate.toLocaleDateString('pt-BR', { day: '2-digit' });
               const month = eventDate.toLocaleDateString('pt-BR', { month: 'short' }).toUpperCase();
               
+              const occupied = agenda.reservas ? agenda.reservas.filter((r: any) => r.status_pagamento === 'pago' || r.status_pagamento === 'pendente').length : 0;
+              const maxCap = agenda.max_capacity || 15;
+              const isFull = occupied >= maxCap;
+              
               return (
-                <Link key={agenda.id} href={`/agenda/${agenda.id}`} className="block group">
+                <div key={agenda.id} className="block group">
                   <motion.div 
                     initial={{ opacity: 0, y: 30 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                    className="bg-white/5 border border-white/10 rounded-2xl md:rounded-[2rem] overflow-hidden hover:bg-white/10 transition-all duration-300 md:hover:-translate-y-2 md:hover:shadow-2xl hover:shadow-[#F17B37]/10 relative h-full flex flex-col"
+                    className={`bg-white/5 border border-white/10 rounded-2xl md:rounded-[2rem] overflow-hidden transition-all duration-300 relative h-full flex flex-col ${isFull ? 'opacity-70 grayscale' : 'hover:bg-white/10 md:hover:-translate-y-2 md:hover:shadow-2xl hover:shadow-[#F17B37]/10'}`}
                   >
                     
                     {/* Imagem de Capa do Card */}
                     <div className="h-32 md:h-48 relative overflow-hidden shrink-0">
                       <div className="absolute inset-0 bg-gradient-to-t from-[#1a2332] to-transparent z-10" />
                       {agenda.images && agenda.images.length > 0 ? (
-                        <img src={agenda.images[0]} className="w-full h-full object-cover group-hover:scale-110 transition duration-700" alt="Capa" />
+                        <img src={agenda.images[0]} className={`w-full h-full object-cover transition duration-700 ${!isFull && 'group-hover:scale-110'}`} alt="Capa" />
                       ) : (
                         <div className="w-full h-full bg-gray-800 flex items-center justify-center"><ImageIcon className="text-gray-600 h-8 w-8 md:h-10 md:w-10" /></div>
                       )}
                       
                       {/* Badge da Data */}
                       <div className="absolute top-2 left-2 md:top-4 md:left-4 z-20 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl md:rounded-2xl p-1.5 md:p-2 px-2 md:px-4 text-center shadow-xl">
-                        <p className="text-[#F17B37] font-bold tracking-widest text-[8px] md:text-[10px] uppercase mb-0.5">{month}</p>
+                        <p className={`${isFull ? 'text-gray-400' : 'text-[#F17B37]'} font-bold tracking-widest text-[8px] md:text-[10px] uppercase mb-0.5`}>{month}</p>
                         <p className="text-lg md:text-2xl font-black leading-none">{day}</p>
                       </div>
+                      
+                      {isFull && (
+                        <div className="absolute inset-0 flex items-center justify-center z-30 bg-black/40 backdrop-blur-sm">
+                          <span className="bg-red-500 text-white font-black px-4 py-2 rounded-xl tracking-widest uppercase transform -rotate-12 border-2 border-white/20 shadow-2xl text-sm md:text-base">
+                            ESGOTADO
+                          </span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Conteúdo */}
                     <div className="p-3 md:p-6 flex-1 flex flex-col relative z-20 bg-[#1a2332]">
-                      <h3 className="text-sm md:text-xl font-bold mb-2 md:mb-4 group-hover:text-[#F17B37] transition line-clamp-2">{agenda.title}</h3>
+                      <h3 className={`text-sm md:text-xl font-bold mb-2 md:mb-4 transition line-clamp-2 ${isFull ? 'text-gray-300' : 'group-hover:text-[#F17B37]'}`}>{agenda.title}</h3>
                       
                       <div className="space-y-2 md:space-y-3 mb-4 md:mb-6 mt-auto">
                         <div className="flex items-start gap-1.5 md:gap-3 text-xs md:text-sm text-gray-400">
-                          <MapPin className="h-3 w-3 md:h-4 md:w-4 text-[#F17B37] shrink-0 mt-0.5" />
+                          <MapPin className={`h-3 w-3 md:h-4 md:w-4 shrink-0 mt-0.5 ${isFull ? 'text-gray-500' : 'text-[#F17B37]'}`} />
                           <span className="line-clamp-1 md:line-clamp-2">{agenda.meeting_point}</span>
                         </div>
                         <div className="flex items-center gap-1.5 md:gap-3 text-xs md:text-sm text-gray-400">
-                          <DollarSign className="h-3 w-3 md:h-4 md:w-4 text-[#25D366]" />
+                          <DollarSign className={`h-3 w-3 md:h-4 md:w-4 ${isFull ? 'text-gray-500' : 'text-[#25D366]'}`} />
                           <span className="font-semibold text-white">R$ {agenda.price}</span>
                         </div>
                       </div>
 
-                      <div className="inline-flex w-full justify-center items-center text-[#F17B37] text-[10px] md:text-sm font-bold uppercase tracking-wide bg-[#F17B37]/10 px-2 py-2 md:px-4 md:py-3 rounded-lg md:rounded-xl group-hover:bg-[#F17B37] group-hover:text-white transition">
-                        Acessar <ChevronRight className="h-3 w-3 md:h-4 md:w-4 ml-1" />
-                      </div>
+                      {isFull ? (
+                        <button disabled className="inline-flex w-full justify-center items-center text-gray-400 text-[10px] md:text-sm font-bold uppercase tracking-wide bg-gray-800 px-2 py-2 md:px-4 md:py-3 rounded-lg md:rounded-xl cursor-not-allowed">
+                          Sem Vagas
+                        </button>
+                      ) : (
+                        <Link href={`/agenda/${agenda.id}`} className="inline-flex w-full justify-center items-center text-[#F17B37] text-[10px] md:text-sm font-bold uppercase tracking-wide bg-[#F17B37]/10 px-2 py-2 md:px-4 md:py-3 rounded-lg md:rounded-xl hover:bg-[#F17B37] hover:text-white transition">
+                          Acessar <ChevronRight className="h-3 w-3 md:h-4 md:w-4 ml-1" />
+                        </Link>
+                      )}
                     </div>
                   </motion.div>
-                </Link>
+                </div>
               );
             })}
           </div>

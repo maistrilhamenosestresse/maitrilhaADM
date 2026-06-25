@@ -44,8 +44,40 @@ export async function POST(request: Request) {
         console.error("Erro ao atualizar reserva:", error);
         // Mesmo que falhe o db, vamos retornar 200 pra InfinitePay não ficar tentando de novo infinitamente
       } else {
-        // 2. Disparar o E-mail para os Administradores (Wellington e Nívia)
-        // Isso pode ser feito via Resend ou Nodemailer futuramente.
+        // 2. Buscar Dados para Notificação e Email
+        const { data: reservaData } = await supabase
+          .from('reservas')
+          .select('*, clients(*), agendas(*)')
+          .eq('id', reserva_id)
+          .single();
+
+        if (reservaData && reservaData.clients && reservaData.agendas) {
+          const client = reservaData.clients;
+          const agenda = reservaData.agendas;
+
+          // 3. Inserir Notificação para o Admin
+          await supabase.from('notificacoes').insert([
+            {
+              reserva_id: reserva_id,
+              mensagem: `Nova venda! ${client.full_name} comprou a trilha ${agenda.title}.`,
+              lida: false
+            }
+          ]);
+
+          // 4. Disparar o E-mail para Cliente e Administradores
+          try {
+            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+            await fetch(`${baseUrl}/api/send-purchase-email`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ client, agenda })
+            });
+            console.log(`[SUCESSO] Email enviado para compra da Reserva ID: ${reserva_id}`);
+          } catch (emailErr) {
+            console.error("Erro ao chamar API de email:", emailErr);
+          }
+        }
+
         console.log(`[SUCESSO] Pagamento confirmado! Reserva ID: ${reserva_id}`);
       }
     }

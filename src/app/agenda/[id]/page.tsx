@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, MapPin, DollarSign, CheckCircle2, ChevronLeft, ChevronRight, Video as VideoIcon, Send, FileText, Image as ImageIcon, Info, X } from "lucide-react";
+import { Calendar, MapPin, DollarSign, CheckCircle2, ChevronLeft, ChevronRight, Video as VideoIcon, Send, FileText, Image as ImageIcon, Info, X, Clock, Navigation, Mountain } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 
@@ -32,7 +32,7 @@ export default function AgendaDetailsPage() {
           .from('reservas')
           .select('*', { count: 'exact', head: true })
           .eq('agenda_id', params.id as string)
-          .eq('status_pagamento', 'pago');
+          .in('status_pagamento', ['pago', 'pendente']);
           
         setPaidCount(count || 0);
 
@@ -184,17 +184,41 @@ export default function AgendaDetailsPage() {
             )}
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
-              <Calendar className="text-[#F17B37] mb-2 h-6 w-6" />
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm text-center md:text-left">
+              <Calendar className="text-[#F17B37] mb-2 h-6 w-6 mx-auto md:mx-0" />
               <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Data</p>
               <p className="font-medium text-lg">{eventDate}</p>
             </div>
-            <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm">
-              <DollarSign className="text-[#25D366] mb-2 h-6 w-6" />
-              <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Valor</p>
-              <p className="font-medium text-lg">R$ {agenda.price}</p>
+            {agenda.duration_hours && (
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm text-center md:text-left">
+                <Clock className="text-[#F17B37] mb-2 h-6 w-6 mx-auto md:mx-0" />
+                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Duração</p>
+                <p className="font-medium text-lg">{agenda.duration_hours}h</p>
+              </div>
+            )}
+            {agenda.distance_km && (
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm text-center md:text-left">
+                <Navigation className="text-[#F17B37] mb-2 h-6 w-6 mx-auto md:mx-0" />
+                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Percurso</p>
+                <p className="font-medium text-lg">{agenda.distance_km}km</p>
+              </div>
+            )}
+            {agenda.difficulty && (
+              <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm text-center md:text-left">
+                <Mountain className="text-[#F17B37] mb-2 h-6 w-6 mx-auto md:mx-0" />
+                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Nível</p>
+                <p className="font-medium text-lg capitalize">{agenda.difficulty === 'easy' ? 'Fácil' : agenda.difficulty === 'hard' ? 'Difícil' : 'Média'}</p>
+              </div>
+            )}
+          </div>
+          
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-4 backdrop-blur-sm flex items-center justify-between">
+            <div>
+              <p className="text-xs text-gray-400 uppercase font-bold tracking-wider">Valor da Trilha</p>
+              <p className="font-bold text-2xl text-[#25D366]">R$ {agenda.price}</p>
             </div>
+            <DollarSign className="text-[#25D366] h-10 w-10 opacity-50" />
           </div>
 
           {/* Navegação de Abas */}

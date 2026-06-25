@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Calendar, DollarSign, FileText, Send, Image as ImageIcon, Video, Loader2, Trash2, 
   CalendarDays, Edit2, Sparkles, CheckCircle2, FileUp, Mic, Square, Navigation, 
-  Camera, AlertCircle, X, Plus, Eye, User, ShieldCheck, Search, ChevronDown, ChevronUp, Clock, MapPin, Users, Printer 
+  Camera, AlertCircle, X, Plus, Eye, User, ShieldCheck, Search, ChevronDown, ChevronUp, Clock, MapPin, Users, Printer, Bell 
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -15,6 +15,7 @@ import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveCont
 type AgendaForm = {
   title: string; location: string; date: string; price: string;
   meeting_point: string; description: string; requirements: string; max_capacity: string;
+  duration_hours: string; distance_km: string; difficulty: string;
   flyer: FileList; images: FileList; video: FileList;
 };
 
@@ -149,8 +150,51 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchAgendasAndCleanup();
-    return () => { if (timerRef.current) clearInterval(timerRef.current); };
+    
+    async function fetchNotifications() {
+      const { data } = await supabase.from('notificacoes').select('*').order('created_at', { ascending: false }).limit(20);
+      if (data) {
+        setNotifications(data);
+        setUnreadCount(data.filter((n: any) => !n.lida).length);
+      }
+    }
+    fetchNotifications();
+
+    const channel = supabase
+      .channel('notificacoes-changes')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notificacoes' }, (payload) => {
+        setNotifications(prev => [payload.new, ...prev]);
+        setUnreadCount(prev => prev + 1);
+      })
+      .subscribe();
+
+    return () => { 
+      if (timerRef.current) clearInterval(timerRef.current); 
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  const handleOpenNotifications = async () => {
+    setIsNotificationsOpen(!isNotificationsOpen);
+    if (!isNotificationsOpen && unreadCount > 0) {
+      setUnreadCount(0);
+      const unreadIds = notifications.filter(n => !n.lida).map(n => n.id);
+      if (unreadIds.length > 0) {
+        await supabase.from('notificacoes').update({ lida: true }).in('id', unreadIds);
+        setNotifications(prev => prev.map(n => ({ ...n, lida: true })));
+      }
+    }
+  };
+
+  const handleClearNotifications = async () => {
+    await supabase.from('notificacoes').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+    setNotifications([]);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.reload();
+  };
 
   useEffect(() => {
     if (chatEndRef.current) chatEndRef.current.scrollIntoView({ behavior: 'smooth' });
@@ -338,6 +382,9 @@ export default function AdminPage() {
     setValue("meeting_point", agenda.meeting_point); setValue("description", agenda.description);
     setValue("requirements", agenda.requirements || "");
     setValue("max_capacity", (agenda.max_capacity || "15").toString());
+    setValue("duration_hours", (agenda.duration_hours || "").toString());
+    setValue("distance_km", (agenda.distance_km || "").toString());
+    setValue("difficulty", agenda.difficulty || "medium");
     setActiveTab('geral');
     setIsFormModalOpen(true);
   };
@@ -496,6 +543,9 @@ export default function AdminPage() {
         title: data.title, date: data.date, price: parseFloat(data.price.replace(',', '.')),
         description: data.description, meeting_point: data.meeting_point,
         requirements: data.requirements, max_capacity: parseInt(data.max_capacity),
+        duration_hours: data.duration_hours ? parseFloat(data.duration_hours.replace(',', '.')) : null,
+        distance_km: data.distance_km ? parseFloat(data.distance_km.replace(',', '.')) : null,
+        difficulty: data.difficulty,
         images: imageUrls, video_url: videoUrl, flyer_url: flyerUrl
       };
 
@@ -543,25 +593,60 @@ export default function AdminPage() {
             <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Mais Trilha Menos Estresse</p>
           </div>
         </div>
-        {mainTab === 'clientes' && (
-          <div className="flex gap-2">
-            <button 
-                  onClick={() => {
-                    const text = clients.map((c, i) => 
-                      `*${i + 1}. ${c.full_name}*\nNasc: ${new Date(c.birth_date).toLocaleDateString('pt-BR')}\nCPF: ${c.cpf} | RG: ${c.rg}\nTel: ${c.phone}\nEmergência: ${c.emergency_contact_name} (${c.emergency_contact_phone})\nSaúde: ${c.health_notes || 'Nenhuma'}`
-                    ).join('\n\n');
-                    const header = `*RELATÓRIO DE SEGUROS - MAIS TRILHA*\nData: ${new Date().toLocaleDateString('pt-BR')}\nTotal de Clientes: ${clients.length}\n\n`;
-                    navigator.clipboard.writeText(header + text).then(() => alert('Lista copiada com sucesso! Agora é só colar no WhatsApp.')).catch(() => alert('Erro ao copiar. Tente novamente.'));
-                  }}
-                  className="bg-[#25D366] text-white p-2.5 rounded-full hover:bg-[#20bd5a] transition shadow-sm" title="Copiar p/ WhatsApp"
-                >
-                  <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg>
-            </button>
-            <button onClick={() => window.print()} className="bg-gray-100 hover:bg-gray-200 text-gray-700 p-2.5 rounded-full transition" title="Imprimir Relatório">
-              <FileText className="h-5 w-5" />
+        
+        <div className="flex items-center gap-4">
+            
+            {/* NOTIFICAÇÕES */}
+            <div className="relative">
+              <button 
+                onClick={handleOpenNotifications}
+                className="relative p-2 text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                <Bell className="h-6 w-6" />
+                {unreadCount > 0 && (
+                  <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
+                )}
+              </button>
+              
+              <AnimatePresence>
+                {isNotificationsOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                    className="absolute right-0 mt-2 w-80 bg-white border border-gray-100 rounded-2xl shadow-xl overflow-hidden z-50"
+                  >
+                    <div className="p-4 border-b border-gray-50 flex justify-between items-center bg-gray-50/50">
+                      <h3 className="font-bold text-gray-900">Notificações</h3>
+                      {notifications.length > 0 && (
+                        <button onClick={handleClearNotifications} className="text-xs text-red-500 hover:text-red-700 font-bold">
+                          Limpar
+                        </button>
+                      )}
+                    </div>
+                    <div className="max-h-64 overflow-y-auto">
+                      {notifications.length === 0 ? (
+                        <p className="p-6 text-center text-gray-400 text-sm">Nenhuma notificação.</p>
+                      ) : (
+                        notifications.map((notif, idx) => (
+                          <div key={notif.id} className={`p-4 border-b border-gray-50 text-sm ${idx === 0 && !notif.lida ? 'bg-blue-50/30' : ''}`}>
+                            <p className="text-gray-800">{notif.mensagem}</p>
+                            <span className="text-[10px] text-gray-400 mt-1 block">
+                              {new Date(notif.created_at).toLocaleString('pt-BR')}
+                            </span>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            <button onClick={handleLogout} className="text-sm font-bold text-gray-500 hover:text-red-500 transition-colors hidden md:block">
+              Sair
             </button>
           </div>
-        )}
       </header>
 
       {/* 2. ÁREA CENTRAL DE CONTEÚDO ROLÁVEL */}
@@ -1265,6 +1350,19 @@ export default function AdminPage() {
                     <div><label className="block text-sm font-bold mb-1">Data</label><input type="date" {...register("date", { required: true })} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#F17B37]" /></div>
                     <div><label className="block text-sm font-bold mb-1">Valor</label><input {...register("price", { required: true })} inputMode="decimal" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#F17B37]" placeholder="150.00" /></div>
                     <div><label className="block text-sm font-bold mb-1">Vagas</label><input type="number" {...register("max_capacity", { required: true })} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#F17B37]" placeholder="15" /></div>
+                  </div>
+                  
+                  <div className="grid grid-cols-3 gap-4">
+                    <div><label className="block text-sm font-bold mb-1">Duração (h)</label><input type="number" step="0.5" {...register("duration_hours")} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#F17B37]" placeholder="4.5" /></div>
+                    <div><label className="block text-sm font-bold mb-1">Distância (km)</label><input type="number" step="0.1" {...register("distance_km")} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#F17B37]" placeholder="12" /></div>
+                    <div>
+                      <label className="block text-sm font-bold mb-1">Dificuldade</label>
+                      <select {...register("difficulty")} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#F17B37]">
+                        <option value="easy">Fácil</option>
+                        <option value="medium">Média</option>
+                        <option value="hard">Difícil</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               )}
