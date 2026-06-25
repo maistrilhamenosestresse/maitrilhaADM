@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     });
 
     const firstName = client.full_name.split(' ')[0];
-    const termoUrl = `https://maistrilhasmenosestresse.com/termo/${client.id}`;
+    const termoUrl = `https://www.maistrilhasmenosestresse.com/termo/${client.id}`;
 
     const mailOptions = {
       from: `Mais Trilha Menos Estresse <${process.env.GMAIL_USER}>`,

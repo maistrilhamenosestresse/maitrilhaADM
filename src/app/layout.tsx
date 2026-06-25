@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://maistrilhasmenosestresse.com'),
+  metadataBase: new URL('https://www.maistrilhasmenosestresse.com'),
   title: "Mais Trilha Menos Estresse",
   description: "A nossa agenda oficial chegou! Confira nossas próximas trilhas, veja as fotos, roteiros e garanta sua vaga.",
   openGraph: {
