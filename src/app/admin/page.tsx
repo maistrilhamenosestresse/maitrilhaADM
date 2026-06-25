@@ -711,7 +711,7 @@ export default function AdminPage() {
                 )}
               </h3>
               
-              <div className="space-y-3 flex-1 overflow-y-auto pr-2 pb-10 custom-scrollbar">
+              <div className="space-y-3 flex-1 overflow-y-auto overflow-x-auto pr-2 pb-10 custom-scrollbar">
                 {isFetching ? (
                   <div className="flex flex-col items-center justify-center h-32 gap-3 text-gray-400">
                     <Loader2 className="h-6 w-6 animate-spin text-[#F17B37]" />
