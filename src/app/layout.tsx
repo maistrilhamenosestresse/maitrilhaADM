@@ -13,11 +13,26 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://maistrilhamenosestresse.com.br'),
   title: "Mais Trilha Menos Estresse",
   description: "A nossa agenda oficial chegou! Confira nossas próximas trilhas, veja as fotos, roteiros e garanta sua vaga.",
   openGraph: {
+    title: "Mais Trilha Menos Estresse",
+    description: "A nossa agenda oficial chegou! Confira nossas próximas trilhas, veja as fotos, roteiros e garanta sua vaga.",
+    images: [{
+      url: '/logo.png',
+      width: 1200,
+      height: 630,
+      alt: 'Mais Trilha Menos Estresse Logo',
+    }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: "Mais Trilha Menos Estresse",
+    description: "A nossa agenda oficial chegou! Confira nossas próximas trilhas.",
     images: ['/logo.png'],
-  }
+  },
 };
 
 export const viewport = {
