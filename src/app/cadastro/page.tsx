@@ -563,15 +563,21 @@ export default function CadastroPage() {
                 <div className="mt-4">
                   <label className="block text-sm font-bold text-gray-300 mb-2">Assinatura igual o documento</label>
                   {!signatureData ? (
-                    <button 
-                      type="button" 
-                      onClick={() => setIsSignatureModalOpen(true)}
-                      className="w-full bg-white/10 text-[#F17B37] border-2 border-dashed border-[#F17B37]/50 p-6 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 hover:bg-[#F17B37]/10 transition"
-                    >
-                      <PenTool className="w-6 h-6" /> 
-                      <span>Clique aqui para assinar</span>
-                      <span className="text-xs text-gray-400 font-normal">Abre a tela de assinatura</span>
-                    </button>
+                    <div className="space-y-2">
+                      <div className="bg-orange-500/10 border border-orange-500/20 rounded-xl p-3 flex items-center gap-3">
+                        <span className="text-2xl leading-none animate-pulse">📱🔄</span>
+                        <p className="text-xs text-orange-400 font-bold leading-tight">Dica de Ouro: Deite o seu celular (horizontal) ANTES de clicar no botão abaixo para ter muito mais espaço!</p>
+                      </div>
+                      <button 
+                        type="button" 
+                        onClick={() => setIsSignatureModalOpen(true)}
+                        className="w-full bg-white/10 text-[#F17B37] border-2 border-dashed border-[#F17B37]/50 p-6 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 hover:bg-[#F17B37]/10 transition"
+                      >
+                        <PenTool className="w-6 h-6" /> 
+                        <span>Clique aqui para assinar</span>
+                        <span className="text-xs text-gray-400 font-normal">Abre a tela de assinatura</span>
+                      </button>
+                    </div>
                   ) : (
                     <div className="bg-white/10 border border-green-500/50 p-4 rounded-2xl text-center">
                       <div className="flex justify-center mb-2 bg-white rounded-xl p-2 w-full max-w-[200px] mx-auto">
@@ -619,11 +625,13 @@ export default function CadastroPage() {
             exit={{ opacity: 0, y: 50 }}
             className="fixed inset-0 bg-[#0F1722] z-50 flex flex-col"
           >
-            <div className="p-4 bg-[#1a2332] flex justify-between items-start border-b border-white/10 gap-2">
-              <div className="flex-1">
-                <h3 className="text-white font-bold text-lg">Sua Assinatura</h3>
-                <p className="text-xs text-gray-400 mt-1 mb-2">Assine com o dedo na área em branco</p>
-                <div className="bg-orange-500/20 border border-orange-500/30 rounded-lg p-2 flex items-center gap-2">
+            <div className="p-4 landscape:p-2 bg-[#1a2332] flex justify-between items-start landscape:items-center border-b border-white/10 gap-2">
+              <div className="flex-1 flex flex-col landscape:flex-row landscape:items-center gap-2">
+                <div>
+                  <h3 className="text-white font-bold text-lg landscape:text-base">Sua Assinatura</h3>
+                  <p className="text-xs text-gray-400 mt-1 mb-2 landscape:mb-0 landscape:mt-0">Assine com o dedo na área em branco</p>
+                </div>
+                <div className="bg-orange-500/20 border border-orange-500/30 rounded-lg p-2 flex items-center gap-2 portrait:block landscape:hidden">
                   <span className="text-lg leading-none">📱🔄</span>
                   <p className="text-xs text-orange-400 font-bold leading-tight">Dica: Deite o celular (horizontal) para ter muito mais espaço para a sua assinatura!</p>
                 </div>
@@ -631,13 +639,14 @@ export default function CadastroPage() {
               <button 
                 type="button" 
                 onClick={() => setIsSignatureModalOpen(false)}
-                className="text-gray-400 hover:text-white p-2 font-bold"
+                className="text-gray-400 hover:text-white p-2 font-bold text-sm landscape:text-xs"
               >
                 Cancelar
               </button>
             </div>
             
             <div className="flex-1 bg-white relative touch-none">
+              {/* key={isSignatureModalOpen ? 'open' : 'closed'} helps remount on open to fix coordinate bugs, but we also rely on CSS w-full h-full */}
               <SignatureCanvas 
                 ref={sigCanvas}
                 canvasProps={{
@@ -646,18 +655,18 @@ export default function CadastroPage() {
                 backgroundColor="white"
                 penColor="black"
               />
-              <div className="absolute top-4 right-4 flex gap-2">
+              <div className="absolute top-2 right-2 landscape:top-1 landscape:right-1 flex gap-2 z-10">
                 <button 
                   type="button" 
                   onClick={() => sigCanvas.current?.clear()}
-                  className="bg-red-100 text-red-600 px-3 py-1.5 rounded-full text-xs font-bold shadow-md flex items-center gap-1 hover:bg-red-200 transition"
+                  className="bg-red-100 text-red-600 px-3 py-1.5 landscape:py-1 rounded-full text-xs font-bold shadow-md flex items-center gap-1 hover:bg-red-200 transition"
                 >
                   <Eraser className="w-3 h-3" /> Limpar
                 </button>
               </div>
             </div>
 
-            <div className="p-4 bg-[#1a2332] border-t border-white/10">
+            <div className="p-4 landscape:p-2 bg-[#1a2332] border-t border-white/10 flex justify-center">
               <button 
                 type="button" 
                 onClick={() => {
@@ -668,7 +677,7 @@ export default function CadastroPage() {
                     alert("Por favor, faça a sua assinatura na área em branco antes de confirmar.");
                   }
                 }}
-                className="w-full bg-[#F17B37] text-white py-4 rounded-2xl font-bold text-lg shadow-lg hover:scale-[1.02] transition"
+                className="w-full max-w-md bg-[#F17B37] text-white py-4 landscape:py-2 rounded-2xl landscape:rounded-xl font-bold text-lg landscape:text-base shadow-lg hover:scale-[1.02] transition"
               >
                 Confirmar Assinatura
               </button>
