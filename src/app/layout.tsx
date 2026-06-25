@@ -53,10 +53,15 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="pt-BR"
+      suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col max-w-full overflow-x-hidden">{children}</body>
+      <body suppressHydrationWarning className="min-h-full flex flex-col max-w-full overflow-x-hidden">
+        {/* Isca para o Warsaw (Diebold Nixdorf) - Evita Hydration Mismatch */}
+        <div id="_tela" style={{ display: 'none' }}></div>
+        {children}
+      </body>
     </html>
   );
 }

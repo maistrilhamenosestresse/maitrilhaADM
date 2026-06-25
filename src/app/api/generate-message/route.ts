@@ -5,13 +5,13 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
 export async function POST(request: Request) {
   try {
-    const { text, audioBase64, mimeType, type } = await request.json();
+    const { text, type } = await request.json();
 
-    if (!text && !audioBase64) {
-      return NextResponse.json({ error: 'Texto ou Áudio é obrigatório' }, { status: 400 });
+    if (!text) {
+      return NextResponse.json({ error: 'Texto é obrigatório' }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-flash-lite-latest" });
 
     let prompt = "";
     

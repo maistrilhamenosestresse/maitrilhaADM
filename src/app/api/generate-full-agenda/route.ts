@@ -11,9 +11,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Texto é obrigatório' }, { status: 400 });
     }
 
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // Usando gemini-flash-lite-latest E forçando o formato JSON nativo para não quebrar a tela
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-flash-lite-latest",
+      generationConfig: {
+        responseMimeType: "application/json",
+      }
+    });
 
-    // History can be passed to give context, but we inject it in the prompt for simplicity.
     let historyContext = "";
     if (history && history.length > 0) {
       historyContext = "\n\n=== HISTÓRICO DA CONVERSA ===\n";
@@ -32,23 +37,22 @@ export async function POST(request: Request) {
     2. Se for uma ordem clara para CADASTRAR/CRIAR uma trilha (Ex: "Cria a trilha pra Capitólio", "Agenda uma trilha pro dia 20..."), você DEVE EXTRAIR OS DADOS para preencher o sistema.
 
     REGRAS DE EXTRAÇÃO DE TRILHA (Quando for cadastrar):
-    1. **title**: O título ou local da trilha. (Ex: "Serra do Cipó")
-    2. **date**: A data do evento no formato YYYY-MM-DD. Tente deduzir o ano (ex: 2024 ou 2025). Ex: "2024-05-20".
-    3. **price**: O valor cobrado. Apenas números e vírgulas. Ex: "150,00".
-    4. **meeting_point**: Locais de embarque e horários. Formate sem asteriscos, use CAIXA ALTA para destaques, coloque emojis 📍 e ⏰, e formate o horário para 24h oficial de Brasília (Ex: "5 da manhã" vira 05:00, "5 da tarde" vira 17:00).
-    5. **description**: Crie um roteiro super empolgante, INJETANDO pesquisas e curiosidades reais sobre belezas naturais ou história do lugar. Use emojis de aventura. 
-       - REGRA SUPREMA: NUNCA USE ASTERISCOS (**) PARA NEGRITO. USE APENAS CAIXA ALTA PARA DESTAQUES!
-       - REGRA DE INCLUSOS (PRIORIDADE MÁXIMA): Se o dono mencionar no áudio/texto que tem algo incluso (ex: "almoço", "café", "taxa", "transporte"), você DEVE OBRIGATORIAMENTE criar uma sessão "O QUE ESTÁ INCLUSO" (em caixa alta) na descrição e fazer uma lista com o símbolo "-" ou emojis. Jamais esqueça os itens que ele mencionar!
+    1. title: O título ou local da trilha. (Ex: "Serra do Cipó")
+    2. date: A data do evento no formato YYYY-MM-DD. Tente deduzir o ano (ex: 2024 ou 2025). Ex: "2024-05-20".
+    3. price: O valor cobrado. Apenas números e vírgulas. Ex: "150,00".
+    4. meeting_point: Locais de embarque e horários. Formate sem asteriscos, use CAIXA ALTA para destaques, coloque emojis 📍 e ⏰, e formate o horário para 24h oficial de Brasília.
+    5. description: Crie um roteiro super empolgante, INJETANDO pesquisas e curiosidades reais. 
+       - REGRA SUPREMA: NUNCA USE ASTERISCOS PARA NEGRITO. USE CAIXA ALTA PARA DESTAQUES!
+       - REGRA DE INCLUSOS (PRIORIDADE MÁXIMA): Se o dono mencionar no áudio/texto que tem algo incluso, você DEVE OBRIGATORIAMENTE criar uma sessão "O QUE ESTÁ INCLUSO" (em caixa alta) na descrição.
 
-    Você DEVE retornar APENAS UM JSON válido. Não inclua \`\`\`json no começo, retorne o JSON cru.
-    
-    ESTRUTURA DO JSON ESPERADA SE FOR CONVERSA:
+    RETORNE ESTRITAMENTE NESTE FORMATO JSON (e nada mais):
+    Se for conversa:
     {
       "type": "chat",
       "message": "Sua resposta amigável e profissional aqui, sem usar asteriscos de markdown."
     }
 
-    ESTRUTURA DO JSON ESPERADA SE FOR CADASTRAR TRILHA:
+    Se for cadastrar trilha:
     {
       "type": "agenda",
       "title": "string",
@@ -57,6 +61,7 @@ export async function POST(request: Request) {
       "meeting_point": "string",
       "description": "string"
     }
+
     ${historyContext}
     ÚLTIMA MENSAGEM DO DONO:
     "${text}"
@@ -65,10 +70,7 @@ export async function POST(request: Request) {
     const result = await model.generateContent(prompt);
     const responseText = result.response.text();
     
-    // Limpar possíveis blocos de markdown do JSON que o Gemini pode colocar mesmo com as instruções
-    const cleanedJsonText = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
-    
-    const data = JSON.parse(cleanedJsonText);
+    const data = JSON.parse(responseText);
 
     return NextResponse.json({ result: data });
 
