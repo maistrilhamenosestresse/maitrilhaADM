@@ -414,7 +414,7 @@ export default function AdminPage() {
     return `${m}:${s}`;
   };
   return (
-    <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden print:overflow-x-visible print:max-w-none bg-gray-50 pb-28 md:pb-12 text-gray-900 relative">
+    <div className="min-h-screen w-full overflow-x-hidden print:overflow-x-visible print:max-w-none bg-gray-50 pb-28 md:pb-12 text-gray-900 relative">
       <div className="p-4 md:p-12 w-full max-w-6xl print:max-w-none print:p-0 mx-auto space-y-6">
         
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
@@ -456,27 +456,27 @@ export default function AdminPage() {
               )}
             </div>
 
-            <div className="flex overflow-x-auto border-b border-gray-100 bg-white sticky top-0 z-20 custom-scrollbar">
+            <div className="flex border-b border-gray-100 bg-white sticky top-0 z-20 custom-scrollbar">
               <button 
                 type="button"
                 onClick={() => setActiveTab('geral')}
-                className={`flex-1 min-w-[100px] py-3 text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-1 border-b-2 transition-all ${activeTab === 'geral' ? 'border-[#F17B37] text-[#F17B37]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                className={`flex-1 min-w-0 py-3.5 text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-1.5 border-b-2 transition-all ${activeTab === 'geral' ? 'border-[#F17B37] text-[#F17B37]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
               >
-                <Navigation className="h-4 w-4 shrink-0" /> Dados
+                <Navigation className="h-4 w-4 shrink-0" /> <span className="truncate w-full text-center">Dados</span>
               </button>
               <button 
                 type="button"
                 onClick={() => setActiveTab('textos')}
-                className={`flex-1 min-w-[120px] py-3 text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-1 border-b-2 transition-all ${activeTab === 'textos' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                className={`flex-1 min-w-0 py-3.5 text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-1.5 border-b-2 transition-all ${activeTab === 'textos' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
               >
-                <Mic className="h-4 w-4 shrink-0" /> IA / Textos
+                <Mic className="h-4 w-4 shrink-0" /> <span className="truncate w-full text-center">IA / Textos</span>
               </button>
               <button 
                 type="button"
                 onClick={() => setActiveTab('midias')}
-                className={`flex-1 min-w-[100px] py-3 text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-1 border-b-2 transition-all ${activeTab === 'midias' ? 'border-orange-400 text-orange-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                className={`flex-1 min-w-0 py-3.5 text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-1.5 border-b-2 transition-all ${activeTab === 'midias' ? 'border-orange-400 text-orange-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
               >
-                <Camera className="h-4 w-4 shrink-0" /> Mídias
+                <Camera className="h-4 w-4 shrink-0" /> <span className="truncate w-full text-center">Mídias</span>
               </button>
             </div>
             
@@ -493,7 +493,7 @@ export default function AdminPage() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3 md:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:gap-4">
                     <div>
                       <label className="block text-sm font-bold mb-1.5 text-gray-700">Data</label>
                       <div className="relative">
@@ -725,7 +725,7 @@ export default function AdminPage() {
                 ) : (
                   agendas.map((agenda) => (
                     <div key={agenda.id} className={`flex items-center justify-between p-3.5 bg-gray-50 border rounded-xl hover:border-gray-300 transition-all ${editingAgenda?.id === agenda.id ? 'border-[#F17B37] bg-[#F17B37]/5 shadow-sm' : 'border-gray-100 hover:shadow-md'}`}>
-                      <div className="truncate pr-3">
+                      <div className="min-w-0 flex-1 pr-3">
                         <div className="flex items-center gap-2 mb-1">
                           <p className="text-sm font-bold text-gray-800 truncate">{agenda.title}</p>
                           <span className="bg-blue-100 text-blue-700 text-[10px] px-2 py-0.5 rounded-full font-bold flex items-center gap-1 border border-blue-200 shrink-0 shadow-sm" title="Pessoas que entraram nesta trilha">
