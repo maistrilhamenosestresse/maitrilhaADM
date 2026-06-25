@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     title: "Mais Trilha Menos Estresse",
     description: "A nossa agenda oficial chegou! Confira nossas próximas trilhas, veja as fotos, roteiros e garanta sua vaga.",
     images: [{
-      url: '/logo.png',
+      url: 'https://nyavgcggwygkywjboaxh.supabase.co/storage/v1/object/public/fotos_agendas/logo.png',
       width: 1200,
       height: 630,
       alt: 'Mais Trilha Menos Estresse Logo',
@@ -31,8 +31,13 @@ export const metadata: Metadata = {
     card: 'summary_large_image',
     title: "Mais Trilha Menos Estresse",
     description: "A nossa agenda oficial chegou! Confira nossas próximas trilhas.",
-    images: ['/logo.png'],
+    images: ['https://nyavgcggwygkywjboaxh.supabase.co/storage/v1/object/public/fotos_agendas/logo.png'],
   },
+  icons: {
+    icon: 'https://nyavgcggwygkywjboaxh.supabase.co/storage/v1/object/public/fotos_agendas/logo.png',
+    shortcut: 'https://nyavgcggwygkywjboaxh.supabase.co/storage/v1/object/public/fotos_agendas/logo.png',
+    apple: 'https://nyavgcggwygkywjboaxh.supabase.co/storage/v1/object/public/fotos_agendas/logo.png',
+  }
 };
 
 export const viewport = {
