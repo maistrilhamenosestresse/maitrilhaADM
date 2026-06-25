@@ -609,60 +609,81 @@ export default function CadastroPage() {
         </form>
       </div>
 
-      {/* MODAL DE ASSINATURA FULL SCREEN */}
+      {/* MODAL DE ASSINATURA FULL SCREEN (Refatorado e Modernizado) */}
       <AnimatePresence>
         {isSignatureModalOpen && (
           <motion.div 
-            initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 50 }}
-            className="fixed inset-0 bg-[#0F1722] z-50 flex flex-col"
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-[100] flex flex-col bg-[#0F1722]/95 backdrop-blur-md h-[100dvh] w-screen overflow-hidden touch-none"
           >
-            <div className="p-4 bg-[#1a2332] flex justify-between items-center border-b border-white/10">
-              <h3 className="text-white font-bold text-lg">Assine igual a identidade</h3>
+            {/* Header Tecnológico */}
+            <div className="p-5 bg-[#1a2332]/80 border-b border-white/10 shrink-0 shadow-lg z-10 flex justify-between items-center">
+              <div>
+                <h3 className="text-white font-bold text-lg flex items-center gap-2">
+                  <PenTool className="w-5 h-5 text-[#F17B37]" /> Assinatura Digital
+                </h3>
+                <p className="text-gray-400 text-xs mt-1">Desenhe sua assinatura no centro do quadro.</p>
+              </div>
               <button 
                 type="button" 
                 onClick={() => setIsSignatureModalOpen(false)}
-                className="text-gray-400 hover:text-white p-2 font-bold text-sm"
+                className="bg-white/5 hover:bg-red-500/10 text-gray-300 hover:text-red-400 p-2.5 rounded-xl font-bold text-sm transition-colors flex items-center gap-2 border border-transparent hover:border-red-500/20"
               >
                 Cancelar
               </button>
             </div>
             
-            <div className="flex-1 bg-white relative touch-none">
-              <SignatureCanvas 
-                ref={sigCanvas}
-                canvasProps={{
-                  className: 'w-full h-full cursor-crosshair'
-                }}
-                backgroundColor="white"
-                penColor="black"
-              />
-              <div className="absolute top-2 right-2 flex gap-2 z-10">
-                <button 
-                  type="button" 
-                  onClick={() => sigCanvas.current?.clear()}
-                  className="bg-red-100 text-red-600 px-3 py-1.5 rounded-full text-xs font-bold shadow-md flex items-center gap-1 hover:bg-red-200 transition"
-                >
-                  <Eraser className="w-3 h-3" /> Limpar
-                </button>
+            {/* Área de Desenho (Quadro Branco) */}
+            <div className="flex-1 relative w-full p-4 md:p-8 flex flex-col touch-none">
+              <div className="flex-1 w-full bg-white rounded-[2rem] shadow-[0_0_40px_rgba(0,0,0,0.5)] overflow-hidden relative border-4 border-[#1a2332]">
+                
+                {/* Dica visual suave no fundo */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-20 select-none">
+                  <span className="text-4xl md:text-6xl font-black text-gray-300 transform -rotate-12">Assine Aqui</span>
+                </div>
+
+                <SignatureCanvas 
+                  ref={sigCanvas}
+                  canvasProps={{
+                    // As classes absolutas garantem que o canvas ocupe 100% sem recalcular errado no mobile
+                    className: 'w-full h-full absolute inset-0 cursor-crosshair touch-none z-10' 
+                  }}
+                  backgroundColor="transparent" // Fundo transparente para ver a marca d'água
+                  penColor="#0F1722" // Cor da caneta combinando com o tema escuro
+                />
+
+                {/* Botão Flutuante de Limpar */}
+                <div className="absolute top-4 right-4 z-20">
+                  <button 
+                    type="button" 
+                    onClick={() => sigCanvas.current?.clear()}
+                    className="bg-gray-100/80 backdrop-blur text-gray-700 border border-gray-200 px-4 py-2.5 rounded-full text-xs font-bold shadow-md flex items-center gap-1.5 hover:bg-red-50 hover:text-red-600 transition-all active:scale-95"
+                  >
+                    <Eraser className="w-4 h-4" /> Limpar Tudo
+                  </button>
+                </div>
               </div>
             </div>
 
-            <div className="p-4 bg-[#1a2332] border-t border-white/10 flex justify-center">
+            {/* Footer com Botão de Confirmação */}
+            <div className="p-5 pb-8 md:pb-5 bg-[#1a2332]/80 border-t border-white/10 shrink-0 shadow-[0_-10px_30px_rgba(0,0,0,0.3)] z-10">
               <button 
                 type="button" 
                 onClick={() => {
                   if (sigCanvas.current && !sigCanvas.current.isEmpty()) {
+                    // Pega a assinatura sem os espaços em branco extras
                     setSignatureData(sigCanvas.current.getTrimmedCanvas().toDataURL("image/png"));
                     setIsSignatureModalOpen(false);
                   } else {
                     alert("Por favor, faça a sua assinatura na área em branco antes de confirmar.");
                   }
                 }}
-                className="w-full max-w-md bg-[#F17B37] text-white py-4 rounded-xl font-bold text-lg shadow-lg hover:scale-[1.02] transition"
+                className="w-full max-w-md mx-auto flex items-center justify-center gap-2 bg-gradient-to-r from-[#F17B37] to-[#f9a03f] text-white py-4 rounded-2xl font-bold text-lg shadow-[0_0_20px_rgba(241,123,55,0.3)] hover:scale-[1.02] active:scale-95 transition-all"
               >
-                Confirmar Assinatura
+                <CheckCircle2 className="w-6 h-6" /> Confirmar Assinatura
               </button>
             </div>
           </motion.div>

@@ -771,17 +771,42 @@ export default function AdminPage() {
                 <h2 className="text-xl md:text-2xl font-bold flex items-center gap-2"><User className="text-[#F17B37]" /> Clientes & Seguros</h2>
                 <p className="text-gray-500 text-sm mt-1">Gerencie os formulários de saúde e seguro-aventura.</p>
               </div>
-              <button 
-                onClick={() => window.print()}
-                className="bg-[#1D2A3A] text-white px-5 py-2.5 rounded-xl font-bold flex items-center gap-2 hover:bg-gray-800 transition"
-              >
-                <FileText className="h-4 w-4" /> Imprimir Relatório para Seguradora
-              </button>
+              <div className="flex flex-col sm:flex-row w-full sm:w-auto gap-2">
+                <button 
+                  onClick={() => {
+                    const text = clients.map((c, i) => 
+                      `*${i + 1}. ${c.full_name}*\nNasc: ${new Date(c.birth_date).toLocaleDateString('pt-BR')}\nCPF: ${c.cpf} | RG: ${c.rg}\nTel: ${c.phone}\nEmergência: ${c.emergency_contact_name} (${c.emergency_contact_phone})\nSaúde: ${c.health_notes || 'Nenhuma'}`
+                    ).join('\n\n');
+                    
+                    const header = `*RELATÓRIO DE SEGUROS - MAIS TRILHA*\nData: ${new Date().toLocaleDateString('pt-BR')}\nTotal de Clientes: ${clients.length}\n\n`;
+                    
+                    navigator.clipboard.writeText(header + text).then(() => {
+                      alert('Lista copiada com sucesso! Agora é só colar no WhatsApp.');
+                    }).catch(() => {
+                      alert('Erro ao copiar. Tente novamente.');
+                    });
+                  }}
+                  className="bg-[#25D366] text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-[#20bd5a] transition w-full sm:w-auto shadow-sm"
+                >
+                  <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6z"></path><rect x="2" y="9" width="4" height="12"></rect><circle cx="4" cy="4" r="2"></circle></svg> Copiar p/ WhatsApp
+                </button>
+                <button 
+                  onClick={() => window.print()}
+                  className="bg-[#1D2A3A] text-white px-5 py-2.5 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-gray-800 transition w-full sm:w-auto shadow-sm"
+                >
+                  <FileText className="h-4 w-4" /> Imprimir p/ Seguradora
+                </button>
+              </div>
             </div>
 
             {/* Cabeçalho apenas visível na Impressão */}
             <div className="hidden print:block mb-8 text-center border-b-2 border-black pb-4">
-              <style>{`@media print { @page { size: landscape; margin: 10mm; } }`}</style>
+              <style>{`
+                @media print { 
+                  @page { size: landscape; margin: 10mm; } 
+                  html, body { width: 1000px !important; min-width: 1000px !important; overflow: visible !important; }
+                }
+              `}</style>
               <h1 className="text-3xl font-black uppercase tracking-widest mb-2">Relatório de Seguros</h1>
               <p className="text-gray-600">Mais Trilha Menos Estresse - Data de Emissão: {new Date().toLocaleDateString('pt-BR')}</p>
             </div>
