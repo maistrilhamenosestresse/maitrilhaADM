@@ -10,6 +10,7 @@ export default function AgendaDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const [agenda, setAgenda] = useState<any>(null);
+  const [paidCount, setPaidCount] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
@@ -26,6 +27,15 @@ export default function AgendaDetailsPage() {
       if (!error && data) {
         setAgenda(data);
         
+        // Busca reservas pagas para calcular lotação
+        const { count } = await supabase
+          .from('reservas')
+          .select('*', { count: 'exact', head: true })
+          .eq('agenda_id', params.id as string)
+          .eq('status_pagamento', 'pago');
+          
+        setPaidCount(count || 0);
+
         // Incrementa visualização apenas uma vez por carregamento de página e por dispositivo
         try {
           if (typeof window !== 'undefined') {
@@ -77,8 +87,8 @@ export default function AgendaDetailsPage() {
   const eventDateObj = new Date(agenda.date + 'T12:00:00Z');
   const eventDate = eventDateObj.toLocaleDateString('pt-BR');
   
-  const whatsappMessage = `Oi, Nívea, eu quero uma vaga para a trilha ${agenda.title} do dia ${eventDate}`;
-  const whatsappUrl = `https://wa.me/5531998793939?text=${encodeURIComponent(whatsappMessage)}`;
+  const isSoldOut = paidCount >= (agenda.max_capacity || 15);
+  const checkoutUrl = `/checkout?agenda_id=${agenda.id}`;
 
   const handleShare = async () => {
     const whatsappText = `🌿 *Trilha: ${agenda.title}*\n📅 Data: ${eventDate}\n💰 Valor: R$ ${agenda.price}\n\n👇 *Confira o Flyer oficial:*\n${agenda.flyer_url || agenda.images?.[0] || window.location.href}\n\n✨ *Garanta sua vaga e veja o roteiro completo aqui:*\n${window.location.href}`;
@@ -154,10 +164,17 @@ export default function AgendaDetailsPage() {
           {/* Header da Trilha */}
           <div>
             <h1 className="text-4xl md:text-5xl font-extrabold tracking-tight mb-3">{agenda.title}</h1>
-            <div className="inline-flex items-center gap-2 bg-[#25D366]/20 text-[#25D366] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border border-[#25D366]/30 mb-4">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse"></span>
-              Vagas Abertas
-            </div>
+            {isSoldOut ? (
+              <div className="inline-flex items-center gap-2 bg-red-500/20 text-red-500 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border border-red-500/30 mb-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse"></span>
+                Esgotado
+              </div>
+            ) : (
+              <div className="inline-flex items-center gap-2 bg-[#25D366]/20 text-[#25D366] px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wide border border-[#25D366]/30 mb-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#25D366] animate-pulse"></span>
+                Vagas Abertas
+              </div>
+            )}
             {/* Visualizações Simples */}
             {agenda.views !== undefined && (
               <div className="text-xs text-gray-400 flex items-center gap-1 mt-1">
@@ -319,14 +336,34 @@ export default function AgendaDetailsPage() {
       >
         <div className="max-w-2xl mx-auto flex flex-col gap-3">
           <div className="flex gap-2">
+            {isSoldOut ? (
+              <button 
+                disabled
+                className="flex-1 flex items-center justify-center gap-2 bg-red-500/80 text-white p-4 rounded-2xl font-bold text-lg shadow-lg cursor-not-allowed opacity-80"
+              >
+                <X className="h-6 w-6" />
+                Vagas Esgotadas
+              </button>
+            ) : (
+              <a 
+                href={checkoutUrl}
+                className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] text-white p-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-[#20b858] hover:scale-[1.02] transition-all"
+              >
+                <CheckCircle2 className="h-6 w-6" />
+                Garantir Vaga
+              </a>
+            )}
+
             <a 
-              href={whatsappUrl}
+              href={`https://wa.me/5531998793939?text=Oi Nívea! Tenho uma dúvida sobre a trilha: ${agenda.title}`}
               target="_blank"
               rel="noreferrer"
-              className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] text-white p-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-[#20b858] hover:scale-[1.02] transition-all"
+              className="flex-none flex items-center justify-center bg-[#25D366] text-white p-4 rounded-2xl font-bold shadow-lg hover:scale-[1.02] transition-all"
+              title="Falar no WhatsApp"
             >
-              <CheckCircle2 className="h-6 w-6" />
-              Garantir Vaga
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-6 w-6">
+                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
+              </svg>
             </a>
             
             <a 

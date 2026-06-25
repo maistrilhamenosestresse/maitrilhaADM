@@ -1,16 +1,30 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabase";
 import { Camera, User, FileText, Calendar, Phone, HeartPulse, AlertTriangle, CheckCircle2, Loader2, ChevronRight, ShieldCheck, PenTool, Eraser } from "lucide-react";
 import SignatureCanvas from "react-signature-canvas";
+import { useSearchParams } from "next/navigation";
 
 export default function CadastroPage() {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  
+  const searchParams = useSearchParams();
+  const agendaId = searchParams.get('agenda_id');
+  const initialEmail = searchParams.get('email') || "";
+  const [agenda, setAgenda] = useState<any>(null);
+
+  useEffect(() => {
+    if (agendaId) {
+      supabase.from('agendas').select('*').eq('id', agendaId).single().then(({data}) => {
+        if (data) setAgenda(data);
+      });
+    }
+  }, [agendaId]);
   
   const sigCanvas = useRef<SignatureCanvas>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -19,7 +33,7 @@ export default function CadastroPage() {
 
   const [formData, setFormData] = useState({
     full_name: "",
-    email: "",
+    email: initialEmail,
     cpf: "",
     rg: "",
     birth_date: "",
@@ -88,16 +102,7 @@ export default function CadastroPage() {
     setIsLoading(true);
 
     try {
-      // 0. Verifica Duplicidade
-      const { data: existing } = await supabase.from('clients')
-        .select('id')
-        .or(`cpf.eq.${formData.cpf},phone.eq.${formData.phone},email.eq.${formData.email}`);
-      
-      if (existing && existing.length > 0) {
-        alert("Ops! Já existe um cadastro no nosso sistema com esse mesmo CPF, Email ou Telefone.");
-        setIsLoading(false);
-        return;
-      }
+      // Verifica Duplicidade - (Removido, faremos Upsert)
 
       let photoUrl = "";
       let signatureUrl = "";
@@ -142,7 +147,7 @@ export default function CadastroPage() {
       // Concatena as observações de saúde
       const formattedHealthNotes = `Alergias a medicação: ${formData.allergies || 'Não tem'}\nDoenças/Condições: ${formData.medical_conditions || 'Não tem'}\nOutras Notas: ${formData.health_notes || 'Nenhuma'}`;
 
-      // 2. Save to Supabase
+      // 2. Save to Supabase (Clients)
       const payload = {
         full_name: formData.full_name,
         email: formData.email,
@@ -158,32 +163,69 @@ export default function CadastroPage() {
         signature_url: signatureUrl
       };
 
-      const { data: insertedData, error: insertError } = await supabase.from('clients').insert([payload]).select();
-      if (insertError) throw insertError;
+      // Tenta atualizar se já existe, senão insere (Upsert simplificado)
+      let savedClient;
+      const { data: existingClient } = await supabase.from('clients').select('*').eq('cpf', formData.cpf).single();
+      if (existingClient) {
+        const { data: updatedData, error: updateError } = await supabase.from('clients').update(payload).eq('id', existingClient.id).select();
+        if (updateError) throw updateError;
+        savedClient = updatedData[0];
+      } else {
+        const { data: insertedData, error: insertError } = await supabase.from('clients').insert([payload]).select();
+        if (insertError) throw insertError;
+        savedClient = insertedData[0];
+      }
 
-      const savedClient = insertedData && insertedData.length > 0 ? insertedData[0] : payload;
+      // 3. Criar Reserva se existir agendaId
+      let reservaId = null;
+      if (agendaId && savedClient) {
+        const { data: reservaData, error: reservaError } = await supabase.from('reservas').insert([{
+          client_id: savedClient.id,
+          agenda_id: agendaId,
+          status_pagamento: 'pendente',
+          valor_pago: 0
+        }]).select();
+        
+        if (reservaError) throw reservaError;
+        reservaId = reservaData[0].id;
+      }
 
-      // 3. Send Email Notification
+      // 4. Send Email Notification
       await fetch('/api/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'new_registration',
-          client: savedClient
-        })
+        body: JSON.stringify({ type: 'new_registration', client: savedClient })
       }).catch(err => console.error("Erro ignorado de email", err));
 
-      // 4. Disparo automático do E-mail de Boas-Vindas com o PDF do Seguro
-      if (savedClient.email) {
-        await fetch('/api/send-client-email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ client: savedClient })
-        }).catch(err => console.error("Erro ignorado do Email Cliente", err));
-      } else {
-        console.warn("Cliente não forneceu e-mail, pulando disparo do PDF.");
+      // 5. Pagamento via InfinitePay
+      if (agenda && reservaId) {
+        try {
+          const reqCheckout = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              reserva_id: reservaId,
+              agenda_title: agenda.title,
+              price: agenda.price,
+              customer: {
+                name: savedClient.full_name,
+                email: savedClient.email,
+                phone_number: savedClient.phone
+              }
+            })
+          });
+          const resCheckout = await reqCheckout.json();
+          
+          if (resCheckout.url) {
+            window.location.href = resCheckout.url; // Redireciona para pagar
+            return;
+          }
+        } catch (e) {
+          console.error("Erro ao gerar link InfinitePay", e);
+        }
       }
 
+      // Se não tiver pagamento online ou falhar, vai para o sucesso genérico
       setIsSuccess(true);
       
     } catch (error: any) {
@@ -208,13 +250,13 @@ export default function CadastroPage() {
           </div>
           <h2 className="text-2xl font-bold text-white mb-2">Cadastro Concluído!</h2>
           <p className="text-gray-400 mb-8">
-            Seus dados foram enviados com segurança. Prepare as botas e até a próxima aventura!
+            Sua vaga foi pré-reservada. Se você não foi redirecionado para o pagamento, aguarde o contato da equipe.
           </p>
           <button 
-            onClick={() => window.location.href = '/agenda'}
+            onClick={() => window.location.href = `/agenda/${agendaId || ''}`}
             className="w-full bg-[#F17B37] text-white py-3 rounded-xl font-bold hover:bg-[#d9682b] transition"
           >
-            Ver Próximas Trilhas
+            Voltar para a Trilha
           </button>
         </motion.div>
       </div>
@@ -230,7 +272,9 @@ export default function CadastroPage() {
       <header className="w-full max-w-2xl px-6 pt-12 pb-8 relative z-10 text-center">
         <ShieldCheck className="h-12 w-12 text-[#F17B37] mx-auto mb-4" />
         <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight mb-2">Ficha de Aventura</h1>
-        <p className="text-gray-400 text-sm md:text-base">Preencha seus dados para ativarmos o seu Seguro de Trilha.</p>
+        <p className="text-gray-400 text-sm md:text-base">
+          {agenda ? `Garantindo vaga para: ${agenda.title}` : 'Preencha seus dados para ativarmos o seu Seguro de Trilha.'}
+        </p>
       </header>
 
       <div className="w-full max-w-2xl px-6 relative z-10">
@@ -599,7 +643,7 @@ export default function CadastroPage() {
                     disabled={isLoading || !acceptedTerms || !signatureData}
                     className="flex-1 bg-gradient-to-r from-[#F17B37] to-[#f9a03f] text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:scale-[1.02] shadow-lg shadow-[#F17B37]/20 transition disabled:opacity-50 disabled:scale-100"
                   >
-                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><CheckCircle2 className="h-5 w-5" /> Finalizar Cadastro</>}
+                    {isLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><CheckCircle2 className="h-5 w-5" /> Confirmar e Pagar</>}
                   </button>
                 </div>
               </motion.div>

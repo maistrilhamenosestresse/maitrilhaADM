@@ -6,13 +6,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Calendar, DollarSign, FileText, Send, Image as ImageIcon, Video, Loader2, Trash2, 
   CalendarDays, Edit2, Sparkles, CheckCircle2, FileUp, Mic, Square, Navigation, 
-  Camera, AlertCircle, X, Plus, Eye, User, ShieldCheck, Search, ChevronDown, ChevronUp 
+  Camera, AlertCircle, X, Plus, Eye, User, ShieldCheck, Search, ChevronDown, ChevronUp, Clock, MapPin, Users, Printer 
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import { BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 
 type AgendaForm = {
   title: string; location: string; date: string; price: string;
-  description: string; meeting_point: string;
+  meeting_point: string; description: string; requirements: string; max_capacity: string;
   flyer: FileList; images: FileList; video: FileList;
 };
 
@@ -27,7 +29,7 @@ export default function AdminPage() {
   const [isFetching, setIsFetching] = useState(true);
   
   // Novos estados para a UI tipo App
-  const [mainTab, setMainTab] = useState<'trilhas' | 'clientes'>('trilhas');
+  const [mainTab, setMainTab] = useState<'trilhas' | 'clientes' | 'reservas' | 'financas'>('trilhas');
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
@@ -35,6 +37,32 @@ export default function AdminPage() {
   const [editingAgenda, setEditingAgenda] = useState<any>(null);
   const [editingClient, setEditingClient] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<'geral' | 'textos' | 'midias'>('geral');
+
+  // --- Estados de Reservas e Finanças ---
+  const [selectedAgendaId, setSelectedAgendaId] = useState<string>('');
+  const [reservas, setReservas] = useState<any[]>([]);
+  const [custos, setCustos] = useState<any[]>([]);
+  const [isFetchingDetails, setIsFetchingDetails] = useState(false);
+  
+  const [financasTab, setFinancasTab] = useState<'receitas' | 'despesas' | 'relatorios'>('despesas');
+  const [expandedReportId, setExpandedReportId] = useState<string | null>(null);
+  const [allReservas, setAllReservas] = useState<any[]>([]);
+  const [allCustos, setAllCustos] = useState<any[]>([]);
+  const [isFetchingGlobalFinances, setIsFetchingGlobalFinances] = useState(false);
+  
+  // Filtros do Dashboard
+  const [reportYear, setReportYear] = useState(new Date().getFullYear());
+  const [reportMonth, setReportMonth] = useState(new Date().getMonth() + 1);
+
+  // IA CFO
+  const [isCFOModalOpen, setIsCFOModalOpen] = useState(false);
+  const [isFetchingCFO, setIsFetchingCFO] = useState(false);
+  const [cfoAdvice, setCfoAdvice] = useState<string>('');
+
+  const [novoCustoNome, setNovoCustoNome] = useState('');
+  const [novoCustoValor, setNovoCustoValor] = useState('');
+  const [novaReservaClientId, setNovaReservaClientId] = useState('');
+  const [novaReservaStatus, setNovaReservaStatus] = useState('pago');
 
   // Estados de IA e Gravação (Mantidos intactos)
   const [isFormattingMeetingPoint, setIsFormattingMeetingPoint] = useState(false);
@@ -55,11 +83,54 @@ export default function AdminPage() {
   const selectedImages = watch("images");
   const selectedVideo = watch("video");
 
+  // --- Funções de Exportação (Excel/CSV) ---
+  const handleExportCSV = (type: 'reservas' | 'relatorios') => {
+    let csvContent = "data:text/csv;charset=utf-8,";
+    
+    if (type === 'reservas') {
+      csvContent += "Nome,CPF,Telefone,Status de Pagamento,Valor Pago\n";
+      reservas.forEach(r => {
+        const row = `${r.clients?.full_name},${r.clients?.cpf},${r.clients?.phone},${r.status_pagamento.toUpperCase()},${r.valor_pago || 0}`;
+        csvContent += row + "\n";
+      });
+    } else if (type === 'relatorios') {
+      csvContent += "Nome da Trilha,Data,Passageiros Pagos,Faturamento (R$),Custos Totais (R$),Lucro Liquido (R$)\n";
+      agendas.forEach(agenda => {
+        const rev = allReservas.filter(r => r.agenda_id === agenda.id && r.status_pagamento === 'pago').length * agenda.price;
+        const cst = allCustos.filter(c => c.agenda_id === agenda.id).reduce((acc, curr) => acc + Number(curr.valor_custo), 0);
+        const row = `${agenda.title},${agenda.date},${allReservas.filter(r => r.agenda_id === agenda.id && r.status_pagamento === 'pago').length},${rev},${cst},${rev - cst}`;
+        csvContent += row + "\n";
+      });
+    }
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${type}_maistrilhas_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleGenerateCFOAdvice = async (financialData: any) => {
+    setIsFetchingCFO(true);
+    setIsCFOModalOpen(true);
+    try {
+      const response = await fetch('/api/generate-cfo', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ financialData })
+      });
+      const data = await response.json();
+      setCfoAdvice(data.result || "Nenhuma análise gerada.");
+    } catch (e) {
+      setCfoAdvice("Não foi possível gerar a análise no momento.");
+    }
+    setIsFetchingCFO(false);
+  };
+
   const fetchAgendasAndCleanup = async () => {
     setIsFetching(true);
     try {
-      const today = new Date().toISOString().split('T')[0];
-      await supabase.from('agendas').delete().lt('date', today);
       const { data, error } = await supabase.from('agendas').select('*').order('date', { ascending: true });
       if (error) throw error;
       setAgendas(data || []);
@@ -106,18 +177,152 @@ export default function AdminPage() {
   const handleSaveEditedClient = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const originalClient = clients.find(c => c.id === editingClient.id);
+      const isEmailChanged = originalClient && originalClient.email !== editingClient.email;
+      
       await supabase.from('clients').update({
         full_name: editingClient.full_name, email: editingClient.email,
         cpf: editingClient.cpf, rg: editingClient.rg,
         phone: editingClient.phone, health_notes: editingClient.health_notes
       }).eq('id', editingClient.id);
+      
       setClients(clients.map(c => c.id === editingClient.id ? editingClient : c));
+      
+      let message = "Cliente atualizado!";
+      
+      if (isEmailChanged) {
+        const res = await fetch("/api/send-client-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ client: editingClient }),
+        });
+        if (res.ok) message += " O contrato foi reenviado para o novo e-mail.";
+        else message += " Mas ocorreu um erro ao reenviar o contrato.";
+      }
+      
       setEditingClient(null);
-      alert("Cliente atualizado!");
+      alert(message);
     } catch (err: any) { alert("Erro ao editar cliente."); }
   };
 
-  // --- Funções de Trilhas e IA (Mantidas intactas) ---
+  const handleResendContract = async (client: any) => {
+    try {
+      const res = await fetch("/api/send-client-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ client }),
+      });
+      if (res.ok) alert("Contrato reenviado com sucesso para " + client.email);
+      else alert("Falha ao reenviar o contrato.");
+    } catch (e) {
+      alert("Erro ao reenviar contrato.");
+    }
+  };
+
+  // --- Funções de Reservas e Finanças ---
+  useEffect(() => {
+    if (agendas.length > 0 && !selectedAgendaId) {
+      setSelectedAgendaId(agendas[0].id);
+    }
+  }, [agendas]);
+
+  useEffect(() => {
+    if (!selectedAgendaId) return;
+    const fetchDetails = async () => {
+      setIsFetchingDetails(true);
+      try {
+        const [resReservas, resCustos] = await Promise.all([
+          supabase.from('reservas').select('*, clients(*)').eq('agenda_id', selectedAgendaId),
+          supabase.from('trilha_custos').select('*').eq('agenda_id', selectedAgendaId).order('created_at', { ascending: true })
+        ]);
+        setReservas(resReservas.data || []);
+        setCustos(resCustos.data || []);
+      } catch (e) {
+        console.error("Erro ao buscar detalhes financeiros/reservas:", e);
+      } finally {
+        setIsFetchingDetails(false);
+      }
+    };
+    fetchDetails();
+  }, [selectedAgendaId]);
+
+  useEffect(() => {
+    if (mainTab === 'financas' && financasTab === 'relatorios') {
+      const fetchGlobalFinances = async () => {
+        setIsFetchingGlobalFinances(true);
+        try {
+          const [resReservas, resCustos] = await Promise.all([
+            supabase.from('reservas').select('agenda_id, status_pagamento'),
+            supabase.from('trilha_custos').select('agenda_id, valor_custo')
+          ]);
+          setAllReservas(resReservas.data || []);
+          setAllCustos(resCustos.data || []);
+        } catch (e) {
+          console.error("Erro ao buscar finanças globais:", e);
+        } finally {
+          setIsFetchingGlobalFinances(false);
+        }
+      };
+      fetchGlobalFinances();
+    }
+  }, [mainTab, financasTab]);
+
+  const handleAddCusto = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!novoCustoNome || !novoCustoValor) return;
+    try {
+      const valor = parseFloat(novoCustoValor.replace(',', '.'));
+      const { data, error } = await supabase.from('trilha_custos').insert([
+        { agenda_id: selectedAgendaId, item_nome: novoCustoNome, valor_custo: valor }
+      ]).select().single();
+      if (error) throw error;
+      setCustos([...custos, data]);
+      setNovoCustoNome(''); setNovoCustoValor('');
+    } catch (err: any) { alert("Erro ao adicionar custo: " + err.message); }
+  };
+
+  const handleDeleteCusto = async (id: string) => {
+    try {
+      await supabase.from('trilha_custos').delete().eq('id', id);
+      setCustos(custos.filter(c => c.id !== id));
+    } catch (err: any) { alert("Erro ao excluir custo."); }
+  };
+
+  const handleAddReserva = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!novaReservaClientId) return alert("Selecione um cliente.");
+    
+    // Verifica se já está na lista
+    if (reservas.some(r => r.client_id === novaReservaClientId)) {
+      return alert("Este cliente já está na lista desta trilha.");
+    }
+
+    try {
+      const { data, error } = await supabase.from('reservas').insert([
+        { agenda_id: selectedAgendaId, client_id: novaReservaClientId, status_pagamento: novaReservaStatus, valor_pago: selectedAgendaData?.price || 0 }
+      ]).select('*, clients(*)').single();
+      
+      if (error) throw error;
+      setReservas([...reservas, data]);
+      setNovaReservaClientId('');
+    } catch (err: any) { alert("Erro ao adicionar passageiro: " + err.message); }
+  };
+
+  const handleDeleteReserva = async (id: string) => {
+    if (!window.confirm("Remover este passageiro da trilha?")) return;
+    try {
+      await supabase.from('reservas').delete().eq('id', id);
+      setReservas(reservas.filter(r => r.id !== id));
+    } catch (err: any) { alert("Erro ao remover passageiro."); }
+  };
+
+  const selectedAgendaData = agendas.find(a => a.id === selectedAgendaId);
+  const totalRevenue = reservas.filter(r => r.status_pagamento === 'pago').length * (selectedAgendaData?.price || 0);
+  const totalCosts = custos.reduce((acc, curr) => acc + Number(curr.valor_custo), 0);
+  const netProfit = totalRevenue - totalCosts;
+  const profitMargin = totalRevenue > 0 ? ((netProfit / totalRevenue) * 100).toFixed(1) : "0.0";
+
+  // --- Funções de Trilhas e IA (Mantidas intactos) ---
   const deleteAgenda = async (id: string) => {
     if (!window.confirm("Excluir esta trilha?")) return;
     try {
@@ -131,6 +336,8 @@ export default function AdminPage() {
     setValue("title", agenda.title); setValue("date", agenda.date);
     setValue("price", agenda.price.toString().replace('.', ','));
     setValue("meeting_point", agenda.meeting_point); setValue("description", agenda.description);
+    setValue("requirements", agenda.requirements || "");
+    setValue("max_capacity", (agenda.max_capacity || "15").toString());
     setActiveTab('geral');
     setIsFormModalOpen(true);
   };
@@ -288,6 +495,7 @@ export default function AdminPage() {
       const payload = {
         title: data.title, date: data.date, price: parseFloat(data.price.replace(',', '.')),
         description: data.description, meeting_point: data.meeting_point,
+        requirements: data.requirements, max_capacity: parseInt(data.max_capacity),
         images: imageUrls, video_url: videoUrl, flyer_url: flyerUrl
       };
 
@@ -520,6 +728,7 @@ export default function AdminPage() {
                               >
                                 <div className="p-4 space-y-4">
                                   <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div><p className="text-gray-500 text-xs font-bold uppercase">Nascimento</p><p className="font-medium">{client.birth_date ? client.birth_date.split('-').reverse().join('/') : 'N/A'}</p></div>
                                     <div><p className="text-gray-500 text-xs font-bold uppercase">CPF</p><p className="font-medium">{client.cpf}</p></div>
                                     <div><p className="text-gray-500 text-xs font-bold uppercase">RG</p><p className="font-medium">{client.rg}</p></div>
                                     <div className="col-span-2"><p className="text-gray-500 text-xs font-bold uppercase">Contato Emergência</p><p className="font-medium">{client.emergency_contact_name} - {client.emergency_contact_phone}</p></div>
@@ -530,10 +739,11 @@ export default function AdminPage() {
                                     <p className="text-sm font-medium text-red-900 whitespace-pre-wrap">{client.health_notes || "Nenhuma anotação."}</p>
                                   </div>
 
-                                  <div className="flex items-center gap-2 pt-2">
-                                    <a href={`/admin/termo/${client.id}`} target="_blank" className="flex-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-50 transition shadow-sm"><FileText className="h-4 w-4"/> Ver Termo</a>
-                                    <button onClick={() => setEditingClient(client)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition"><Edit2 className="h-4 w-4"/></button>
-                                    <button onClick={() => handleDeleteClient(client.id)} className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition"><Trash2 className="h-4 w-4"/></button>
+                                  <div className="flex items-center gap-2 pt-2 flex-wrap">
+                                    <a href={`/termo/${client.id}`} target="_blank" className="flex-1 bg-white border border-gray-200 text-gray-700 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-gray-50 transition shadow-sm"><FileText className="h-4 w-4"/> Ver Termo</a>
+                                    <button onClick={() => handleResendContract(client)} className="flex-1 bg-orange-50 border border-orange-200 text-orange-700 py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-2 hover:bg-orange-100 transition shadow-sm" title="Reenviar Contrato para o E-mail"><Send className="h-4 w-4"/> Reenviar Contrato</button>
+                                    <button onClick={() => setEditingClient(client)} className="p-2.5 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-100 transition" title="Editar"><Edit2 className="h-4 w-4"/></button>
+                                    <button onClick={() => handleDeleteClient(client.id)} className="p-2.5 bg-red-50 text-red-600 rounded-xl hover:bg-red-100 transition" title="Excluir"><Trash2 className="h-4 w-4"/></button>
                                   </div>
                                 </div>
                               </motion.div>
@@ -574,6 +784,386 @@ export default function AdminPage() {
                 </div>
               </motion.div>
             )}
+
+            {/* --- VISÃO DE RESERVAS (LISTA DE PASSAGEIROS) --- */}
+            {mainTab === 'reservas' && (
+              <motion.div key="reservas" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-6">
+                
+                <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3">
+                  <label className="text-sm font-bold text-gray-700">Selecione a Trilha:</label>
+                  <select 
+                    value={selectedAgendaId} 
+                    onChange={(e) => setSelectedAgendaId(e.target.value)}
+                    className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 focus:ring-2 focus:ring-[#F17B37] outline-none"
+                  >
+                    {agendas.map(a => (
+                      <option key={a.id} value={a.id}>{a.title} - {formatDateDisplay(a.date)}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {isFetchingDetails ? (
+                  <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-[#F17B37]" /></div>
+                ) : (
+                  <>
+                    {/* Lista de Passageiros */}
+                    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                    <div className="bg-[#1D2A3A] p-4 flex justify-between items-center text-white">
+                        <h3 className="font-bold flex items-center gap-2"><User className="h-5 w-5"/> Lista de Passageiros</h3>
+                        <div className="flex gap-2">
+                          <button onClick={() => handleExportCSV('reservas')} className="bg-white/10 hover:bg-white/20 p-2 rounded-xl transition text-xs font-bold flex items-center gap-1">
+                            <FileUp className="h-4 w-4" /> Baixar Excel
+                          </button>
+                          <span className="bg-white/20 px-3 py-1.5 rounded-xl text-xs font-bold flex items-center">{reservas.length} / {selectedAgendaData?.max_capacity || 15} Vagas</span>
+                        </div>
+                      </div>
+                      
+                      <div className="p-4 space-y-3 max-h-[40vh] overflow-y-auto custom-scrollbar">
+                        {reservas.length === 0 ? (
+                          <p className="text-center text-gray-400 py-6 text-sm font-medium">Nenhum passageiro nesta trilha ainda.</p>
+                        ) : (
+                          reservas.map(reserva => (
+                            <div key={reserva.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50">
+                              <div>
+                                <p className="font-bold text-gray-800 text-sm">{reserva.clients?.full_name}</p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${reserva.status_pagamento === 'pago' ? 'bg-green-100 text-green-700' : 'bg-orange-100 text-orange-700'}`}>
+                                    {reserva.status_pagamento.toUpperCase()}
+                                  </span>
+                                </div>
+                              </div>
+                              <button onClick={() => handleDeleteReserva(reserva.id)} className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"><Trash2 className="h-4 w-4"/></button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Adicionar Manualmente */}
+                    <form onSubmit={handleAddReserva} className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 space-y-4">
+                      <h4 className="font-bold text-blue-900 flex items-center gap-2 text-sm"><Plus className="h-4 w-4"/> Inserir Passageiro Manualmente</h4>
+                      <select 
+                        value={novaReservaClientId} 
+                        onChange={(e) => setNovaReservaClientId(e.target.value)}
+                        className="w-full p-3 bg-white border border-blue-200 rounded-xl text-sm outline-none"
+                      >
+                        <option value="">Selecione um cliente cadastrado...</option>
+                        {clients.map(c => (
+                          <option key={c.id} value={c.id}>{c.full_name} ({c.cpf})</option>
+                        ))}
+                      </select>
+                      <div className="flex gap-3">
+                        <select 
+                          value={novaReservaStatus} 
+                          onChange={(e) => setNovaReservaStatus(e.target.value)}
+                          className="w-1/2 p-3 bg-white border border-blue-200 rounded-xl text-sm outline-none"
+                        >
+                          <option value="pago">PAGO</option>
+                          <option value="pendente">PENDENTE</option>
+                        </select>
+                        <button type="submit" className="w-1/2 bg-blue-600 text-white font-bold rounded-xl shadow-sm hover:bg-blue-700 transition">Adicionar</button>
+                      </div>
+                    </form>
+                  </>
+                )}
+              </motion.div>
+            )}
+
+            {/* --- VISÃO FINANCEIRA --- */}
+            {mainTab === 'financas' && (
+              <motion.div key="financas" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="space-y-4">
+                
+                {/* Abas Superiores de Finanças */}
+                <div className="flex bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden shrink-0 mt-4">
+                  <button type="button" onClick={() => setFinancasTab('despesas')} className={`flex-1 py-3 text-xs font-bold border-b-2 transition-all ${financasTab === 'despesas' ? 'border-red-500 text-red-600 bg-red-50/50' : 'border-transparent text-gray-500 hover:bg-gray-50'}`}>Despesas</button>
+                  <button type="button" onClick={() => setFinancasTab('receitas')} className={`flex-1 py-3 text-xs font-bold border-b-2 transition-all ${financasTab === 'receitas' ? 'border-green-500 text-green-600 bg-green-50/50' : 'border-transparent text-gray-500 hover:bg-gray-50'}`}>Receitas</button>
+                  <button type="button" onClick={() => setFinancasTab('relatorios')} className={`flex-1 py-3 text-xs font-bold border-b-2 transition-all ${financasTab === 'relatorios' ? 'border-[#1D2A3A] text-[#1D2A3A] bg-[#1D2A3A]/5' : 'border-transparent text-gray-500 hover:bg-gray-50'}`}>Relatórios</button>
+                </div>
+
+                {financasTab !== 'relatorios' && (
+                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col gap-3">
+                    <label className="text-sm font-bold text-gray-700">Selecione a Trilha:</label>
+                    <select 
+                      value={selectedAgendaId} 
+                      onChange={(e) => setSelectedAgendaId(e.target.value)}
+                      className="w-full p-3 bg-gray-50 border border-gray-200 rounded-xl font-bold text-gray-800 focus:ring-2 focus:ring-[#25D366] outline-none"
+                    >
+                      {agendas.map(a => (
+                        <option key={a.id} value={a.id}>{a.title} - {formatDateDisplay(a.date)}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* CONTEÚDO: DESPESAS */}
+                {financasTab === 'despesas' && (
+                  <div className="space-y-4">
+                    {isFetchingDetails ? (
+                      <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-red-500" /></div>
+                    ) : (
+                      <>
+                        <form onSubmit={handleAddCusto} className="bg-red-50/50 p-5 rounded-2xl border border-red-100 shadow-sm flex flex-col gap-3">
+                          <h4 className="font-bold text-red-900 flex items-center gap-2 text-sm"><Plus className="h-4 w-4"/> Registrar Nova Despesa</h4>
+                          <div className="flex gap-3">
+                            <input type="text" placeholder="Nome do gasto (Ex: Van, Guia)" value={novoCustoNome} onChange={e => setNovoCustoNome(e.target.value)} className="flex-[2] p-3 bg-white border border-red-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-red-400" required />
+                            <input type="text" placeholder="R$ 150.00" inputMode="decimal" value={novoCustoValor} onChange={e => setNovoCustoValor(e.target.value)} className="flex-1 p-3 bg-white border border-red-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-red-400" required />
+                          </div>
+                          <button type="submit" className="w-full bg-red-500 text-white p-3 rounded-xl font-bold shadow-sm hover:bg-red-600 transition">Salvar Despesa</button>
+                        </form>
+
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                          <div className="bg-gray-50 border-b border-gray-100 p-4 flex justify-between items-center">
+                            <h3 className="font-bold text-gray-800 flex items-center gap-2"><DollarSign className="h-5 w-5 text-red-500"/> Gastos Registrados</h3>
+                            <span className="bg-red-100 text-red-700 px-3 py-1 rounded-lg text-xs font-bold">Total: R$ {totalCosts.toFixed(2)}</span>
+                          </div>
+                          <div className="p-4 space-y-3 max-h-[40vh] overflow-y-auto custom-scrollbar">
+                            {custos.length === 0 ? (
+                              <p className="text-center text-gray-400 py-4 text-sm font-medium">Nenhum custo registrado.</p>
+                            ) : (
+                              custos.map(custo => (
+                                <div key={custo.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl hover:bg-gray-50">
+                                  <p className="font-bold text-gray-700 text-sm">{custo.item_nome}</p>
+                                  <div className="flex items-center gap-3">
+                                    <span className="text-red-500 font-bold text-sm">- R$ {Number(custo.valor_custo).toFixed(2)}</span>
+                                    <button onClick={() => handleDeleteCusto(custo.id)} className="text-gray-400 hover:text-red-500"><Trash2 className="h-4 w-4"/></button>
+                                  </div>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* CONTEÚDO: RECEITAS */}
+                {financasTab === 'receitas' && (
+                  <div className="space-y-4">
+                    {isFetchingDetails ? (
+                      <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-green-500" /></div>
+                    ) : (
+                      <>
+                        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-3xl p-6 text-white shadow-xl relative overflow-hidden">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-white rounded-full blur-[60px] opacity-20" />
+                          <p className="text-green-100 text-sm font-bold uppercase tracking-wider mb-1">Faturamento Total</p>
+                          <p className="text-4xl font-black">R$ {totalRevenue.toFixed(2)}</p>
+                          <p className="text-green-100 text-xs mt-2">Baseado em {reservas.filter(r => r.status_pagamento === 'pago').length} passageiros pagos (R$ {selectedAgendaData?.price} cada).</p>
+                        </div>
+                        
+                        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+                          <div className="bg-gray-50 border-b border-gray-100 p-4">
+                            <h3 className="font-bold text-gray-800 text-sm">Origem das Receitas (Passageiros Pagos)</h3>
+                          </div>
+                          <div className="p-4 space-y-2 max-h-[40vh] overflow-y-auto custom-scrollbar">
+                            {reservas.filter(r => r.status_pagamento === 'pago').length === 0 ? (
+                              <p className="text-center text-gray-400 py-4 text-sm font-medium">Nenhum pagamento confirmado.</p>
+                            ) : (
+                              reservas.filter(r => r.status_pagamento === 'pago').map(reserva => (
+                                <div key={reserva.id} className="flex items-center justify-between p-3 border border-gray-100 rounded-xl">
+                                  <p className="font-bold text-gray-700 text-sm">{reserva.clients?.full_name}</p>
+                                  <span className="text-green-600 font-bold text-sm">+ R$ {selectedAgendaData?.price}</span>
+                                </div>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </div>
+                )}
+
+                {/* CONTEÚDO: RELATÓRIOS */}
+                {financasTab === 'relatorios' && (
+                  <div className="space-y-6 pb-6">
+                    {isFetchingGlobalFinances ? (
+                      <div className="flex justify-center py-10"><Loader2 className="h-8 w-8 animate-spin text-[#1D2A3A]" /></div>
+                    ) : (
+                      <div className="space-y-6 print:m-0 print:p-0">
+                        
+                        {/* Header do Relatório */}
+                        <div className="flex justify-between items-center bg-white p-4 rounded-2xl shadow-sm border border-gray-100 print:shadow-none print:border-none">
+                          <h3 className="font-bold text-gray-800 text-lg flex items-center gap-2">
+                            <DollarSign className="h-6 w-6 text-[#25D366]" /> Dashboard Financeiro
+                          </h3>
+                          <div className="flex gap-2 print:hidden">
+                            <button 
+                              onClick={() => {
+                                const payload = { agendas, allReservas, allCustos, year: reportYear };
+                                handleGenerateCFOAdvice(payload);
+                              }}
+                              className="bg-purple-50 text-purple-600 hover:bg-purple-100 p-2 rounded-xl transition flex gap-2 text-sm font-bold"
+                            >
+                              <Sparkles className="h-4 w-4" /> IA CFO
+                            </button>
+                            <button onClick={() => handleExportCSV('relatorios')} className="bg-blue-50 text-blue-600 hover:bg-blue-100 p-2 rounded-xl transition flex gap-2 text-sm font-bold">
+                              <FileUp className="h-4 w-4" /> Excel
+                            </button>
+                            <button onClick={() => window.print()} className="bg-gray-100 text-gray-700 hover:bg-gray-200 p-2 rounded-xl transition flex gap-2 text-sm font-bold">
+                              <Printer className="h-4 w-4" /> Imprimir
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Filtro de Ano */}
+                        <div className="flex justify-center gap-2 print:hidden">
+                          {[2024, 2025, 2026].map(y => (
+                            <button key={y} onClick={() => setReportYear(y)} className={`px-4 py-2 rounded-xl text-sm font-bold transition ${reportYear === y ? 'bg-[#1D2A3A] text-white' : 'bg-white text-gray-500 border border-gray-200'}`}>
+                              {y}
+                            </button>
+                          ))}
+                        </div>
+
+                        {/* Lógica de Dados do Dashboard */}
+                        {(() => {
+                          const monthlyData = Array.from({ length: 12 }, (_, i) => {
+                            const month = i + 1;
+                            const trailsInMonth = agendas.filter(a => {
+                              const d = new Date(a.date + 'T12:00:00Z');
+                              return d.getFullYear() === reportYear && (d.getMonth() + 1) === month;
+                            });
+                            let rev = 0; let cst = 0;
+                            trailsInMonth.forEach(agenda => {
+                              rev += allReservas.filter(r => r.agenda_id === agenda.id && r.status_pagamento === 'pago').length * agenda.price;
+                              cst += allCustos.filter(c => c.agenda_id === agenda.id).reduce((acc, curr) => acc + Number(curr.valor_custo), 0);
+                            });
+                            return { name: new Date(2000, i).toLocaleString('pt-BR', { month: 'short' }).toUpperCase(), lucro: rev - cst, faturamento: rev, despesas: cst };
+                          });
+
+                          const totalRevYear = monthlyData.reduce((sum, d) => sum + d.faturamento, 0);
+                          const totalCstYear = monthlyData.reduce((sum, d) => sum + d.despesas, 0);
+                          const yearProfit = totalRevYear - totalCstYear;
+                          const monthProfit = monthlyData[reportMonth - 1]?.lucro || 0;
+
+                          const trailsInSelectedMonth = agendas.filter(a => {
+                            const d = new Date(a.date + 'T12:00:00Z');
+                            return d.getFullYear() === reportYear && (d.getMonth() + 1) === reportMonth;
+                          });
+
+                          return (
+                            <>
+                              {/* Cards de Resumo Anual */}
+                              <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-gradient-to-br from-[#1D2A3A] to-gray-900 p-5 rounded-2xl shadow-md text-white">
+                                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Lucro Anual ({reportYear})</p>
+                                  <p className="text-3xl font-black text-[#25D366]">R$ {yearProfit.toFixed(2)}</p>
+                                </div>
+                                <div className="bg-white p-5 rounded-2xl shadow-sm border border-gray-100">
+                                  <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">Faturamento Bruto</p>
+                                  <p className="text-2xl font-black text-gray-800">R$ {totalRevYear.toFixed(2)}</p>
+                                  <p className="text-xs text-gray-500 mt-1">Custos Totais: <span className="text-red-500 font-bold">- R$ {totalCstYear.toFixed(2)}</span></p>
+                                </div>
+                              </div>
+
+                              {/* Gráfico Mensal */}
+                              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mt-4">
+                                <h4 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wide">Evolução do Lucro (Mensal)</h4>
+                                <div className="h-52 w-full">
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={monthlyData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#eee" />
+                                      <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#888' }} />
+                                      <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#888' }} tickFormatter={(val) => `R$${val}`} />
+                                      <RechartsTooltip cursor={{ fill: 'transparent' }} contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }} />
+                                      <Bar dataKey="lucro" radius={[4, 4, 4, 4]}>
+                                        {monthlyData.map((entry, index) => (
+                                          <cell key={`cell-${index}`} fill={entry.lucro >= 0 ? '#25D366' : '#EF4444'} />
+                                        ))}
+                                      </Bar>
+                                    </BarChart>
+                                  </ResponsiveContainer>
+                                </div>
+                              </div>
+
+                              {/* Seleção do Mês (Calendário) */}
+                              <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+                                <h4 className="font-bold text-gray-800 mb-3 text-sm uppercase tracking-wide">Extrato Mensal Detalhado</h4>
+                                <div className="flex overflow-x-auto gap-2 pb-2 custom-scrollbar print:hidden">
+                                  {Array.from({ length: 12 }, (_, i) => {
+                                    const m = i + 1;
+                                    const mName = new Date(2000, i).toLocaleString('pt-BR', { month: 'short' }).toUpperCase();
+                                    return (
+                                      <button 
+                                        key={m} 
+                                        onClick={() => setReportMonth(m)}
+                                        className={`flex-shrink-0 w-16 py-3 rounded-2xl border transition-all flex flex-col items-center justify-center gap-1 ${reportMonth === m ? 'border-[#F17B37] bg-[#F17B37]/10' : 'border-gray-200 bg-gray-50'}`}
+                                      >
+                                        <span className={`text-[10px] font-bold ${reportMonth === m ? 'text-[#F17B37]' : 'text-gray-400'}`}>{mName}</span>
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+
+                                <div className="mt-4 pt-4 border-t border-gray-100">
+                                  <div className="flex justify-between items-center mb-4">
+                                    <h5 className="font-bold text-gray-700">Trilhas de {new Date(2000, reportMonth - 1).toLocaleString('pt-BR', { month: 'long' })}</h5>
+                                    <span className={`font-black ${monthProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>Balanço: R$ {monthProfit.toFixed(2)}</span>
+                                  </div>
+
+                                  {trailsInSelectedMonth.length === 0 ? (
+                                    <div className="bg-gray-50 rounded-xl p-6 text-center border border-dashed border-gray-200">
+                                      <CalendarDays className="h-8 w-8 text-gray-300 mx-auto mb-2" />
+                                      <p className="text-sm font-bold text-gray-500">Nenhuma expedição neste mês.</p>
+                                    </div>
+                                  ) : (
+                                    <div className="space-y-3">
+                                      {trailsInSelectedMonth.map(agenda => {
+                                        const rev = allReservas.filter(r => r.agenda_id === agenda.id && r.status_pagamento === 'pago').length * agenda.price;
+                                        const cst = allCustos.filter(c => c.agenda_id === agenda.id).reduce((acc, curr) => acc + Number(curr.valor_custo), 0);
+                                        const profit = rev - cst;
+                                        const isPositive = profit >= 0;
+
+                                        return (
+                                          <div key={agenda.id} className={`bg-white rounded-xl border transition-all duration-300 overflow-hidden ${expandedReportId === agenda.id ? 'border-[#1D2A3A] ring-1 ring-[#1D2A3A]/20' : 'border-gray-200 hover:border-gray-300'}`}>
+                                            <div onClick={() => setExpandedReportId(expandedReportId === agenda.id ? null : agenda.id)} className="p-4 flex items-center justify-between cursor-pointer">
+                                              <div>
+                                                <h4 className="font-bold text-gray-900 text-sm line-clamp-1">{agenda.title}</h4>
+                                                <p className="text-xs text-gray-500 mt-0.5">{formatDateDisplay(agenda.date)}</p>
+                                              </div>
+                                              <div className="flex items-center gap-3">
+                                                <span className={`text-[10px] font-black px-2 py-1 rounded-md ${isPositive ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                                  R$ {profit.toFixed(2)}
+                                                </span>
+                                                {expandedReportId === agenda.id ? <ChevronUp className="h-4 w-4 text-gray-400" /> : <ChevronDown className="h-4 w-4 text-gray-400" />}
+                                              </div>
+                                            </div>
+
+                                            <AnimatePresence>
+                                              {expandedReportId === agenda.id && (
+                                                <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="border-t border-gray-100 bg-gray-50/50">
+                                                  <div className="p-4 flex justify-between">
+                                                    <div>
+                                                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Receitas</p>
+                                                      <p className="font-bold text-green-600 text-sm">R$ {rev.toFixed(2)}</p>
+                                                    </div>
+                                                    <div>
+                                                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Despesas</p>
+                                                      <p className="font-bold text-red-500 text-sm">R$ {cst.toFixed(2)}</p>
+                                                    </div>
+                                                    <div className="text-right">
+                                                      <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Margem</p>
+                                                      <p className="font-bold text-gray-800 text-sm">{rev > 0 ? ((profit / rev) * 100).toFixed(1) : '0'}%</p>
+                                                    </div>
+                                                  </div>
+                                                </motion.div>
+                                              )}
+                                            </AnimatePresence>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </motion.div>
+            )}
           </AnimatePresence>
         </div>
       </main>
@@ -590,48 +1180,56 @@ export default function AdminPage() {
 
       {/* 4. MENU INFERIOR (BOTTOM NAVIGATION) TIPO APP */}
       <nav className="bg-white border-t border-gray-200 fixed bottom-0 w-full z-30 pb-safe print:hidden shadow-[0_-10px_20px_rgba(0,0,0,0.03)]">
-        <div className="flex justify-around items-center max-w-md mx-auto relative">
+        <div className="flex justify-around items-center max-w-lg mx-auto relative px-2">
+          
           <button 
             onClick={() => setMainTab('trilhas')}
             className={`flex flex-col items-center justify-center w-full py-3 transition-colors relative ${mainTab === 'trilhas' ? 'text-[#F17B37]' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            {mainTab === 'trilhas' && <motion.div layoutId="nav-pill" className="absolute top-0 w-12 h-1 bg-[#F17B37] rounded-b-full" />}
-            <CalendarDays className="h-6 w-6 mb-1" />
-            <span className="text-[10px] font-bold tracking-wide">Trilhas</span>
+            {mainTab === 'trilhas' && <motion.div layoutId="nav-pill" className="absolute top-0 w-10 h-1 bg-[#F17B37] rounded-b-full" />}
+            <CalendarDays className="h-5 w-5 mb-1" />
+            <span className="text-[9px] font-bold tracking-wide">Trilhas</span>
+          </button>
+
+          <button 
+            onClick={() => setMainTab('reservas')}
+            className={`flex flex-col items-center justify-center w-full py-3 transition-colors relative ${mainTab === 'reservas' ? 'text-[#F17B37]' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            {mainTab === 'reservas' && <motion.div layoutId="nav-pill" className="absolute top-0 w-10 h-1 bg-[#F17B37] rounded-b-full" />}
+            <User className="h-5 w-5 mb-1" />
+            <span className="text-[9px] font-bold tracking-wide">Listas</span>
           </button>
           
           {/* BOTÃO ASSISTENTE IA CENTRALIZADO COM ANIMAÇÕES MODERNAS */}
-          <div className="relative -top-6 flex justify-center w-[80px] shrink-0">
-            
-            {/* Anel de Pulso (Efeito Sonar contínuo) */}
-            <motion.div
-              animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0, 0.4] }}
-              transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-              className="absolute top-0 w-[64px] h-[64px] bg-[#F17B37] rounded-full z-30 pointer-events-none"
-            />
-
-            {/* Botão Principal Flutuante e Interativo */}
+          <div className="relative -top-6 flex justify-center w-[70px] shrink-0 mx-1">
+            <motion.div animate={{ scale: [1, 1.5, 1], opacity: [0.4, 0, 0.4] }} transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }} className="absolute top-0 w-[56px] h-[56px] bg-[#F17B37] rounded-full z-30 pointer-events-none" />
             <motion.button
               onClick={() => setIsAssistantOpen(true)}
-              animate={{ y: [0, -6, 0] }} // Flutuação suave
-              transition={{ y: { duration: 3, repeat: Infinity, ease: "easeInOut" } }}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.9, rotate: -5 }} // Efeito esmagar ao tocar
-              className="absolute bg-white rounded-full shadow-[0_0_20px_rgba(241,123,55,0.6)] z-40 border-[3px] border-[#F17B37] overflow-hidden flex items-center justify-center p-0.5"
-              style={{ width: '64px', height: '64px' }}
+              animate={{ y: [0, -4, 0] }} transition={{ y: { duration: 3, repeat: Infinity, ease: "easeInOut" } }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.9, rotate: -5 }}
+              className="absolute bg-white rounded-full shadow-[0_0_20px_rgba(241,123,55,0.6)] z-40 border-[3px] border-[#F17B37] overflow-hidden flex items-center justify-center p-0.5" style={{ width: '56px', height: '56px' }}
             >
               <img src="/logo.png" alt="IA" className="h-full w-full object-cover scale-110 rounded-full" />
             </motion.button>
           </div>
 
           <button 
+            onClick={() => setMainTab('financas')}
+            className={`flex flex-col items-center justify-center w-full py-3 transition-colors relative ${mainTab === 'financas' ? 'text-[#25D366]' : 'text-gray-400 hover:text-gray-600'}`}
+          >
+            {mainTab === 'financas' && <motion.div layoutId="nav-pill" className="absolute top-0 w-10 h-1 bg-[#25D366] rounded-b-full" />}
+            <DollarSign className="h-5 w-5 mb-1" />
+            <span className="text-[9px] font-bold tracking-wide">Finanças</span>
+          </button>
+
+          <button 
             onClick={() => setMainTab('clientes')}
             className={`flex flex-col items-center justify-center w-full py-3 transition-colors relative ${mainTab === 'clientes' ? 'text-[#F17B37]' : 'text-gray-400 hover:text-gray-600'}`}
           >
-            {mainTab === 'clientes' && <motion.div layoutId="nav-pill" className="absolute top-0 w-12 h-1 bg-[#F17B37] rounded-b-full" />}
-            <User className="h-6 w-6 mb-1" />
-            <span className="text-[10px] font-bold tracking-wide">Clientes</span>
+            {mainTab === 'clientes' && <motion.div layoutId="nav-pill" className="absolute top-0 w-10 h-1 bg-[#F17B37] rounded-b-full" />}
+            <FileText className="h-5 w-5 mb-1" />
+            <span className="text-[9px] font-bold tracking-wide">Clientes</span>
           </button>
+
         </div>
       </nav>
 
@@ -661,9 +1259,10 @@ export default function AdminPage() {
               {activeTab === 'geral' && (
                 <div className="space-y-4 max-w-2xl mx-auto">
                   <div><label className="block text-sm font-bold mb-1">Título</label><input {...register("title", { required: true })} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#F17B37]" placeholder="Ex: Serra do Cipó" /></div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div><label className="block text-sm font-bold mb-1">Data</label><input type="date" {...register("date", { required: true })} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#F17B37]" /></div>
                     <div><label className="block text-sm font-bold mb-1">Valor</label><input {...register("price", { required: true })} inputMode="decimal" className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#F17B37]" placeholder="150.00" /></div>
+                    <div><label className="block text-sm font-bold mb-1">Vagas</label><input type="number" {...register("max_capacity", { required: true })} className="w-full p-4 bg-gray-50 border border-gray-200 rounded-2xl outline-none focus:ring-2 focus:ring-[#F17B37]" placeholder="15" /></div>
                   </div>
                 </div>
               )}
@@ -743,7 +1342,37 @@ export default function AdminPage() {
         )}
       </AnimatePresence>
 
-
+      {/* MODAL CFO VIRTUAL */}
+      <AnimatePresence>
+        {isCFOModalOpen && (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <motion.div initial={{ y: 50, opacity: 0 }} animate={{ y: 0, opacity: 1 }} className="bg-white rounded-[2rem] w-full max-w-2xl max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+              <div className="p-5 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-purple-600 to-indigo-600 text-white">
+                <h2 className="font-bold text-lg flex items-center gap-2"><Sparkles className="w-5 h-5 text-yellow-300" /> CFO Virtual IA</h2>
+                <button onClick={() => setIsCFOModalOpen(false)} className="p-2 hover:bg-white/20 rounded-full transition"><X className="h-5 w-5"/></button>
+              </div>
+              <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
+                {isFetchingCFO ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-gray-500">
+                    <Loader2 className="w-10 h-10 animate-spin text-purple-600 mb-4" />
+                    <p className="font-bold">O CFO está analisando suas planilhas...</p>
+                    <p className="text-sm">Isso pode levar alguns segundos.</p>
+                  </div>
+                ) : (
+                  <div className="whitespace-pre-wrap text-gray-700 leading-relaxed text-sm md:text-base">
+                    {cfoAdvice}
+                  </div>
+                )}
+              </div>
+              <div className="p-4 border-t border-gray-100 bg-gray-50 text-right">
+                <button onClick={() => setIsCFOModalOpen(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-6 py-2 rounded-xl font-bold transition">
+                  Fechar Relatório
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     
       {isAssistantOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
