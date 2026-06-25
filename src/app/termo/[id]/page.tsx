@@ -3,8 +3,7 @@
 import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
-import { Loader2, Printer, ChevronLeft } from "lucide-react";
-import Link from "next/link";
+import { Loader2, Printer } from "lucide-react";
 
 export default function TermoPrintPage() {
   const { id } = useParams();
@@ -33,10 +32,7 @@ export default function TermoPrintPage() {
 
   return (
     <div className="min-h-screen bg-gray-100 p-8 print:p-0 print:bg-white text-black font-sans">
-      <div className="max-w-[800px] mx-auto mb-6 print:hidden flex justify-between items-center">
-        <Link href="/admin" className="text-blue-600 hover:underline flex items-center gap-1 font-bold">
-          <ChevronLeft className="w-4 h-4" /> Voltar ao Painel
-        </Link>
+      <div className="max-w-[800px] mx-auto mb-6 print:hidden flex justify-end items-center">
         <button 
           onClick={() => window.print()}
           className="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 hover:bg-blue-700 transition"
