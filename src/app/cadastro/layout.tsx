@@ -1,13 +1,26 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Cadastro de Seguro | Mais Trilha Menos Estresse',
+  title: 'Ficha de Cadastro | Mais Trilha Menos Estresse',
   description: 'Preencha seus dados para o seguro aventura e assine o termo de responsabilidade da Mais Trilha Menos Estresse.',
   openGraph: {
-    title: 'Cadastro de Seguro | Mais Trilha Menos Estresse',
+    title: 'Ficha de Cadastro | Mais Trilha Menos Estresse',
     description: 'Preencha seus dados para o seguro aventura e assine o termo de responsabilidade da Mais Trilha Menos Estresse.',
-    siteName: 'Mais Trilha Menos Estresse'
-  }
+    siteName: 'Mais Trilha Menos Estresse',
+    images: [{
+      url: '/logo.png',
+      width: 1200,
+      height: 630,
+      alt: 'Mais Trilha Menos Estresse Logo',
+    }],
+    type: 'website',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Ficha de Cadastro | Mais Trilha Menos Estresse',
+    description: 'Preencha seus dados para o seguro aventura e assine o termo de responsabilidade.',
+    images: ['/logo.png'],
+  },
 };
 
 export default function CadastroLayout({ children }: { children: React.ReactNode }) {
