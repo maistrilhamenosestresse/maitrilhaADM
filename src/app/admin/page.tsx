@@ -442,9 +442,9 @@ export default function AdminPage() {
         </div>
 
         {mainTab === 'trilhas' ? (
-        <div className="grid lg:grid-cols-[1fr_400px] gap-6 md:gap-8 print:hidden">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 md:gap-8 print:hidden w-full max-w-full min-w-0">
           
-          <div className={`bg-white rounded-2xl shadow-sm border transition-all ${editingAgenda ? 'border-orange-500 ring-4 ring-orange-500/10' : 'border-gray-100'} overflow-hidden`}>
+          <div className={`min-w-0 bg-white rounded-2xl shadow-sm border transition-all ${editingAgenda ? 'border-orange-500 ring-4 ring-orange-500/10' : 'border-gray-100'} overflow-hidden`}>
             
             <div className="p-4 md:p-6 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <h2 className="text-lg font-bold flex items-center gap-2">
@@ -675,7 +675,7 @@ export default function AdminPage() {
             </form>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-6 min-w-0 w-full max-w-full">
             
             <div className="bg-gradient-to-br from-[#1D2A3A] to-gray-900 rounded-2xl p-6 text-white shadow-xl border border-gray-800 relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 bg-[#25D366] rounded-full blur-[80px] opacity-20 group-hover:opacity-40 transition-opacity duration-500" />
