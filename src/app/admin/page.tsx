@@ -414,8 +414,8 @@ export default function AdminPage() {
     return `${m}:${s}`;
   };
   return (
-    <div className="min-h-screen bg-gray-50 pb-28 md:pb-12 text-gray-900 relative">
-      <div className="p-4 md:p-12 max-w-6xl mx-auto space-y-6">
+    <div className="min-h-screen w-full max-w-[100vw] overflow-x-hidden bg-gray-50 pb-28 md:pb-12 text-gray-900 relative">
+      <div className="p-4 md:p-12 w-full max-w-6xl mx-auto space-y-6">
         
         <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 print:hidden">
           <div>

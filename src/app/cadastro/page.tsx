@@ -619,10 +619,14 @@ export default function CadastroPage() {
             exit={{ opacity: 0, y: 50 }}
             className="fixed inset-0 bg-[#0F1722] z-50 flex flex-col"
           >
-            <div className="p-4 bg-[#1a2332] flex justify-between items-center border-b border-white/10">
-              <div>
+            <div className="p-4 bg-[#1a2332] flex justify-between items-start border-b border-white/10 gap-2">
+              <div className="flex-1">
                 <h3 className="text-white font-bold text-lg">Sua Assinatura</h3>
-                <p className="text-xs text-gray-400">Assine com o dedo na área em branco</p>
+                <p className="text-xs text-gray-400 mt-1 mb-2">Assine com o dedo na área em branco</p>
+                <div className="bg-orange-500/20 border border-orange-500/30 rounded-lg p-2 flex items-center gap-2">
+                  <span className="text-lg leading-none">📱🔄</span>
+                  <p className="text-xs text-orange-400 font-bold leading-tight">Dica: Deite o celular (horizontal) para ter muito mais espaço para a sua assinatura!</p>
+                </div>
               </div>
               <button 
                 type="button" 
