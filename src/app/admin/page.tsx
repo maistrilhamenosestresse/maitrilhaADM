@@ -456,27 +456,27 @@ export default function AdminPage() {
               )}
             </div>
 
-            <div className="flex border-b border-gray-100 bg-white sticky top-0 z-20">
+            <div className="flex overflow-x-auto border-b border-gray-100 bg-white sticky top-0 z-20 custom-scrollbar">
               <button 
                 type="button"
                 onClick={() => setActiveTab('geral')}
-                className={`flex-1 py-3.5 text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-1.5 border-b-2 transition-all ${activeTab === 'geral' ? 'border-[#F17B37] text-[#F17B37]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                className={`flex-1 min-w-[100px] py-3 text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-1 border-b-2 transition-all ${activeTab === 'geral' ? 'border-[#F17B37] text-[#F17B37]' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
               >
-                <Navigation className="h-4 w-4" /> Dados
+                <Navigation className="h-4 w-4 shrink-0" /> Dados
               </button>
               <button 
                 type="button"
                 onClick={() => setActiveTab('textos')}
-                className={`flex-1 py-3.5 text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-1.5 border-b-2 transition-all ${activeTab === 'textos' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                className={`flex-1 min-w-[120px] py-3 text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-1 border-b-2 transition-all ${activeTab === 'textos' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
               >
-                <Mic className="h-4 w-4" /> Áudio e Textos
+                <Mic className="h-4 w-4 shrink-0" /> IA / Textos
               </button>
               <button 
                 type="button"
                 onClick={() => setActiveTab('midias')}
-                className={`flex-1 py-3.5 text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-1.5 border-b-2 transition-all ${activeTab === 'midias' ? 'border-orange-400 text-orange-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
+                className={`flex-1 min-w-[100px] py-3 text-xs md:text-sm font-bold flex flex-col md:flex-row items-center justify-center gap-1 border-b-2 transition-all ${activeTab === 'midias' ? 'border-orange-400 text-orange-500' : 'border-transparent text-gray-500 hover:text-gray-700 hover:bg-gray-50'}`}
               >
-                <Camera className="h-4 w-4" /> Mídias
+                <Camera className="h-4 w-4 shrink-0" /> Mídias
               </button>
             </div>
             
