@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     });
 
     const firstName = client.full_name.split(' ')[0];
-    const termoUrl = `https://maistrilha.vercel.app/admin/termo/${client.id}`;
+    const termoUrl = `https://maistrilha.vercel.app/termo/${client.id}`;
 
     const mailOptions = {
       from: `Mais Trilha Menos Estresse <${process.env.GMAIL_USER}>`,
