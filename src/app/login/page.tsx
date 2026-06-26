@@ -20,8 +20,8 @@ export default function LoginPage() {
     // E-mails autorizados para acessar o painel de administrador
     const ALLOWED_EMAILS = [
       "niveamariamagalhaes28@gmail.com",
-      "wellingtonf.social@gmail.com"
-      // TODO: adicionar o 3º e-mail que o usuário vai passar
+      "wellingtonf.social@gmail.com",
+      "maistrilhamenosestresse@gmail.com"
     ];
 
     if (!ALLOWED_EMAILS.includes(email.toLowerCase().trim())) {

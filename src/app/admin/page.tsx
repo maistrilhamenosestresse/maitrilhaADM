@@ -164,6 +164,29 @@ export default function AdminPage() {
   useEffect(() => {
     fetchAgendasAndCleanup();
     
+    // --- SEGURANÇA: LOG DE ACESSO DO DESENVOLVEDOR ---
+    async function checkDevAccess() {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user && user.email === 'wellingtonf.social@gmail.com') {
+          const lastLog = sessionStorage.getItem('dev_access_logged');
+          if (!lastLog) {
+            sessionStorage.setItem('dev_access_logged', 'true');
+            fetch('/api/send-email', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                to: 'maistrilhamenosestresse@gmail.com, niveamariamagalhaes28@gmail.com',
+                subject: '⚠️ LOG DE SEGURANÇA - ACESSO DO DESENVOLVEDOR',
+                text: `Olá Nívea,\n\nEste é um aviso automático de segurança do sistema.\n\nO painel de administrador foi acessado pelo desenvolvedor (Wellington) em ${new Date().toLocaleString('pt-BR')}.\n\nIsso garante transparência total sobre quem está visualizando ou modificando as informações do painel.\n\nAtenciosamente,\nSistema Mais Trilha Menos Estresse`
+              })
+            }).catch(e => console.error("Falha ao enviar log de segurança", e));
+          }
+        }
+      } catch (e) { console.error(e); }
+    }
+    checkDevAccess();
+
     async function fetchNotifications() {
       const { data } = await supabase.from('notificacoes').select('*').order('created_at', { ascending: false }).limit(20);
       if (data) {
