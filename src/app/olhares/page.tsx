@@ -1,9 +1,69 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { ArrowLeft, Quote, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
+
+function SwarmParticle({ mouseX, mouseY, hasMoved }: { mouseX: any, mouseY: any, hasMoved: boolean }) {
+  // Posição aleatória inicial nos cantos da tela
+  const [initialPos] = useState({
+    x: typeof window !== 'undefined' ? Math.random() * window.innerWidth : 500,
+    y: typeof window !== 'undefined' ? Math.random() * window.innerHeight : 500,
+  });
+
+  // Física de Mel (Extremamente Lenta e Suave)
+  // O atrito é altíssimo e a atração minúscula. Elas vão demorar muito para chegar no mouse.
+  const springConfig = { 
+    damping: Math.random() * 50 + 40, // 40 a 90 (Muito arrasto, parecem estar na água)
+    stiffness: Math.random() * 3 + 1, // 1 a 4 (Atração quase nula)
+    mass: Math.random() * 4 + 2 // Muito pesadas
+  };
+  
+  const springX = useSpring(hasMoved ? mouseX : initialPos.x, springConfig);
+  const springY = useSpring(hasMoved ? mouseY : initialPos.y, springConfig);
+  
+  // Offset aleatório largo para que formem uma nuvem imensa ao redor do mouse, sem colar nele
+  const [cloudOffset] = useState({ 
+    x: (Math.random() - 0.5) * 500, 
+    y: (Math.random() - 0.5) * 500 
+  });
+
+  const size = Math.random() * 4 + 2;
+
+  const baseX = useTransform(springX, val => val + cloudOffset.x);
+  const baseY = useTransform(springY, val => val + cloudOffset.y);
+
+  return (
+    <motion.div
+      className="fixed pointer-events-none z-50"
+      style={{ x: baseX, y: baseY, left: 0, top: 0 }}
+    >
+      <motion.div
+        className="rounded-full bg-[#F17B37]"
+        style={{
+          width: size,
+          height: size,
+          boxShadow: '0 0 10px 2px #F17B37',
+          left: -size/2,
+          top: -size/2,
+          filter: 'blur(1px)'
+        }}
+        // Aqui entra a exata mesma animação flutuante aleatória das partículas de fundo!
+        animate={{
+          x: [0, Math.random() * 200 - 100, 0],
+          y: [0, Math.random() * -200 - 100, 0],
+          opacity: [0, Math.random() * 0.7 + 0.2, 0]
+        }}
+        transition={{
+          duration: Math.random() * 15 + 15, // 15 a 30 segundos! Bem lento e natural.
+          repeat: Infinity,
+          ease: "easeInOut"
+        }}
+      />
+    </motion.div>
+  );
+}
 
 export default function OlharesPage() {
   const router = useRouter();
@@ -17,6 +77,31 @@ export default function OlharesPage() {
   // Efeito Parallax super suave para os textos e partículas
   const yHero = useTransform(scrollYProgress, [0, 1], [0, 300]);
   const opacityHero = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+
+  // Rastreamento global do mouse/touch para o Enxame
+  const mouseX = useMotionValue(typeof window !== "undefined" ? window.innerWidth / 2 : 0);
+  const mouseY = useMotionValue(typeof window !== "undefined" ? window.innerHeight / 2 : 0);
+  const [hasMoved, setHasMoved] = useState(false);
+
+  useEffect(() => {
+    const handleMove = (e: MouseEvent | TouchEvent) => {
+      setHasMoved(true);
+      if ('touches' in e) {
+        mouseX.set(e.touches[0].clientX);
+        mouseY.set(e.touches[0].clientY);
+      } else {
+        mouseX.set(e.clientX);
+        mouseY.set(e.clientY);
+      }
+    };
+    
+    window.addEventListener("mousemove", handleMove);
+    window.addEventListener("touchmove", handleMove);
+    return () => {
+      window.removeEventListener("mousemove", handleMove);
+      window.removeEventListener("touchmove", handleMove);
+    };
+  }, [mouseX, mouseY]);
 
   const olhares = [
     {
@@ -40,31 +125,50 @@ export default function OlharesPage() {
   return (
     <div className="bg-[#05080c] text-white min-h-screen overflow-x-hidden font-sans selection:bg-[#F17B37] selection:text-white">
       
-      {/* PARTÍCULAS DE POEIRA CINEMATOGRÁFICAS */}
+      {/* O ENXAME INTERATIVO: Fagulhas que orbitam o ponteiro com física elástica */}
       {isClient && (
-        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden opacity-40">
-          {[...Array(40)].map((_, i) => (
-            <motion.div
-              key={i}
-              className="absolute w-1 h-1 bg-white rounded-full blur-[1px]"
-              initial={{
-                x: Math.random() * window.innerWidth,
-                y: Math.random() * window.innerHeight,
-                opacity: Math.random() * 0.5 + 0.1,
-                scale: Math.random() * 2 + 0.5,
-              }}
-              animate={{
-                y: [null, Math.random() * -200 - 100],
-                x: [null, Math.random() * 100 - 50],
-                opacity: [null, 0, Math.random() * 0.8, 0],
-              }}
-              transition={{
-                duration: Math.random() * 10 + 15,
-                repeat: Infinity,
-                ease: "linear",
-              }}
-            />
+        <div className="pointer-events-none">
+          {[...Array(12)].map((_, i) => (
+            <SwarmParticle key={`swarm-${i}`} mouseX={mouseX} mouseY={mouseY} hasMoved={hasMoved} />
           ))}
+        </div>
+      )}
+
+      {/* PARTÍCULAS DE POEIRA CINEMATOGRÁFICAS (FAGULHAS E NÉVOA DE FUNDO) */}
+      {isClient && (
+        <div className="fixed inset-0 z-20 pointer-events-none overflow-hidden">
+          {[...Array(80)].map((_, i) => {
+            const size = Math.random() * 3 + 2; // Tamanhos entre 2px e 5px
+            const isOrange = i % 4 !== 0; // 75% das partículas serão laranjas!
+            return (
+              <motion.div
+                key={i}
+                className="absolute rounded-full"
+                style={{
+                  width: size,
+                  height: size,
+                  backgroundColor: isOrange ? '#F17B37' : '#ffffff', // Maioria laranja
+                  boxShadow: isOrange ? '0 0 12px 2px #F17B37' : '0 0 5px #ffffff', // Brilho maior no laranja
+                  filter: 'blur(1px)'
+                }}
+                initial={{
+                  x: Math.random() * window.innerWidth,
+                  y: Math.random() * window.innerHeight,
+                  opacity: 0,
+                }}
+                animate={{
+                  y: [null, Math.random() * -300 - 100], // Sobem flutuando muito mais
+                  x: [null, Math.random() * 200 - 100],  // Balançam para os lados
+                  opacity: [0, Math.random() * 0.9 + 0.3, 0], // Acendem e apagam mais fortes
+                }}
+                transition={{
+                  duration: Math.random() * 15 + 10,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
+              />
+            );
+          })}
         </div>
       )}
 

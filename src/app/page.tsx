@@ -43,7 +43,7 @@ export default function LandingPage() {
       {/* NAVEGAÇÃO */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-4 bg-gradient-to-b from-[#0F1722] to-transparent backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <img src="/FotosEvideos/logo/55C232D4-8B60-45C4-82BC-4B25960F8B60%20Copy.JPG" alt="Mais Trilha Logo" className="h-14 w-14 rounded-full aspect-square object-cover object-center shadow-[0_0_15px_rgba(241,123,55,0.4)] border-2 border-[#F17B37]/30" />
+          <img src="/FotosEvideos/logo/55C232D4-8B60-45C4-82BC-4B25960F8B60%20Copy.JPG" alt="Mais Trilha Logo" className="h-20 w-20 rounded-full aspect-square object-cover object-center shadow-[0_0_15px_rgba(241,123,55,0.4)] border-50 border-[#F17B37]/30" />
         </div>
         <div className="flex items-center gap-4">
           <button
