@@ -1,25 +1,32 @@
-"use client";
-
 import { useEffect, useState, useRef } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { ChevronDown, ArrowRight, TreePine, Map, Users, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
   const router = useRouter();
+  
+  // Parallax Setup
   const { scrollYProgress } = useScroll();
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-  const heroScale = useTransform(scrollYProgress, [0, 0.2], [1, 1.1]);
-  const heroY = useTransform(scrollYProgress, [0, 0.2], [0, 100]);
+  const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
+  
+  const heroOpacity = useTransform(smoothProgress, [0, 0.2], [1, 0]);
+  const heroScale = useTransform(smoothProgress, [0, 0.2], [1, 1.1]);
+  const heroY = useTransform(smoothProgress, [0, 0.2], [0, 100]);
+
+  // Gallery Parallax
+  const y1 = useTransform(smoothProgress, [0, 1], [0, -100]);
+  const y2 = useTransform(smoothProgress, [0, 1], [0, -250]);
+  const y3 = useTransform(smoothProgress, [0, 1], [0, -150]);
 
   return (
     <div className="bg-[#0F1722] text-white min-h-screen overflow-x-hidden font-sans selection:bg-[#F17B37] selection:text-white">
       
       {/* NAVEGAÇÃO */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-6 bg-gradient-to-b from-[#0F1722]/80 to-transparent backdrop-blur-sm">
-        <div className="flex items-center gap-2">
-          <TreePine className="h-8 w-8 text-[#F17B37]" />
-          <span className="font-black text-xl tracking-tighter uppercase">Mais Trilha</span>
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-4 bg-gradient-to-b from-[#0F1722] to-transparent backdrop-blur-sm">
+        <div className="flex items-center gap-3">
+          <img src="/FotosEvideos/logo/55C232D4-8B60-45C4-82BC-4B25960F8B60%20Copy.JPG" alt="Mais Trilha Logo" className="h-12 w-12 rounded-full border-2 border-[#F17B37] object-cover shadow-[0_0_15px_rgba(241,123,55,0.4)]" />
+          <span className="font-black text-xl tracking-tighter uppercase drop-shadow-md hidden sm:block">Mais Trilha</span>
         </div>
         <div className="flex items-center gap-4">
           <button 
@@ -43,18 +50,19 @@ export default function LandingPage() {
           playsInline
           className="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-60 mix-blend-overlay"
         >
-          <source src="/FotosEvideos/IMG_9319.MP4" type="video/mp4" />
+          <source src="/FotosEvideos/Grupo/D6866C9C-E715-484A-BF5A-9449D2A675BB-Copy.mp4" type="video/mp4" />
         </video>
         
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F1722]/40 via-transparent to-[#0F1722] z-10" />
+        <div className="absolute inset-0 bg-black/20 z-10" />
 
         <div className="relative z-20 text-center max-w-4xl px-6 flex flex-col items-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 1, delay: 0.2 }}
+            transition={{ duration: 1.5, delay: 0.2, ease: "easeOut" }}
           >
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9] mb-6">
+            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tighter leading-[0.9] mb-6 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]">
               Descubra uma <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F17B37] to-[#f9a03f]">coragem</span> que você nem sabia que existia.
             </h1>
           </motion.div>
@@ -62,8 +70,8 @@ export default function LandingPage() {
           <motion.p 
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.8 }}
-            className="text-lg md:text-2xl text-gray-300 font-medium max-w-2xl mb-12 leading-relaxed"
+            transition={{ duration: 1.5, delay: 0.8 }}
+            className="text-lg md:text-2xl text-gray-200 font-medium max-w-2xl mb-12 leading-relaxed drop-shadow-lg"
           >
             Uma conexão indescritível com a natureza. Superação, encontros reais e paisagens que mudam a forma como você vê o mundo.
           </motion.p>
@@ -71,9 +79,9 @@ export default function LandingPage() {
           <motion.button 
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 1.2 }}
+            transition={{ duration: 0.8, delay: 1.2 }}
             onClick={() => router.push('/agenda')}
-            className="group relative inline-flex items-center justify-center gap-3 bg-white text-[#0F1722] px-8 py-4 rounded-full font-black text-lg overflow-hidden hover:scale-105 transition-all duration-300"
+            className="group relative inline-flex items-center justify-center gap-3 bg-white text-[#0F1722] px-8 py-4 rounded-full font-black text-lg overflow-hidden hover:scale-105 transition-all duration-300 shadow-[0_0_40px_rgba(255,255,255,0.2)] hover:shadow-[0_0_50px_rgba(241,123,55,0.5)]"
           >
             <span className="relative z-10 flex items-center gap-2">Começar Aventura <ArrowRight className="h-5 w-5 group-hover:translate-x-1 transition-transform" /></span>
           </motion.button>
@@ -82,7 +90,7 @@ export default function LandingPage() {
         <motion.div 
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-10 z-20 text-gray-400"
+          className="absolute bottom-10 z-20 text-gray-400 drop-shadow-md"
         >
           <ChevronDown className="h-8 w-8 opacity-50" />
         </motion.div>
@@ -92,20 +100,20 @@ export default function LandingPage() {
       <section className="py-24 md:py-40 px-6 relative z-20 bg-[#0F1722] overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#F17B37]/5 via-[#0F1722]/80 to-[#0F1722] z-0" />
         
-        <div className="max-w-5xl mx-auto relative z-10">
+        <div className="max-w-6xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true, margin: "-100px" }}
             transition={{ duration: 1, ease: "easeOut" }}
-            className="mb-24 text-center"
+            className="mb-32 text-center"
           >
-            <h2 className="text-[#F17B37] font-bold tracking-[0.3em] uppercase text-xs mb-6">A Nossa Essência</h2>
+            <h2 className="text-[#F17B37] font-bold tracking-[0.3em] uppercase text-xs mb-6 drop-shadow-lg">A Nossa Essência</h2>
             <h3 className="text-5xl md:text-7xl font-black tracking-tight text-white drop-shadow-2xl">Como tudo começou</h3>
           </motion.div>
 
           {/* Intro Nivea */}
-          <div className="flex flex-col md:flex-row gap-16 items-center mb-32">
+          <div className="flex flex-col md:flex-row gap-16 md:gap-24 items-center mb-40">
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -127,13 +135,13 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ duration: 1.2, type: "spring" }}
               whileHover={{ scale: 1.05, rotate: 0 }}
-              className="flex-1 relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-[0_0_50px_rgba(241,123,55,0.15)] ring-1 ring-white/10 group"
+              className="flex-1 w-full relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-[0_0_60px_rgba(241,123,55,0.15)] ring-1 ring-white/10 group"
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
-              <img src="/FotosEvideos/Nivea/IMG_3414.webp" alt="Nívea Magalhães" className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-1000 ease-out" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10" />
+              <img src="/FotosEvideos/nivea_cachoeira.webp" alt="Nívea na Cachoeira" className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-1000 ease-out" />
               <div className="absolute bottom-8 left-8 z-20">
                 <p className="font-black text-3xl text-white drop-shadow-lg">Nívea</p>
-                <p className="text-[#F17B37] text-sm font-bold uppercase tracking-widest mt-1">A Fundadora</p>
+                <p className="text-[#F17B37] text-sm font-bold uppercase tracking-widest mt-1 drop-shadow-md">A Fundadora</p>
               </div>
             </motion.div>
           </div>
@@ -144,10 +152,10 @@ export default function LandingPage() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 1 }}
-            className="text-center max-w-4xl mx-auto mb-32 relative"
+            className="text-center max-w-4xl mx-auto mb-40 relative"
           >
             <div className="absolute -inset-10 bg-gradient-to-r from-transparent via-[#F17B37]/10 to-transparent blur-3xl z-0" />
-            <p className="text-3xl md:text-4xl font-light leading-relaxed italic text-gray-100 relative z-10 drop-shadow-xl">
+            <p className="text-3xl md:text-4xl font-light leading-relaxed italic text-gray-100 relative z-10 drop-shadow-[0_5px_15px_rgba(0,0,0,0.8)]">
               "Mesmo com esse sonho dentro de mim... por muito tempo acreditei que aquilo não era pra mim. Que não era para uma mulher... casada... mãe... aos 32 anos."
             </p>
 
@@ -155,15 +163,15 @@ export default function LandingPage() {
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, delay: 0.3 }}
-              className="mt-16 relative aspect-video md:aspect-[21/9] rounded-[2rem] overflow-hidden shadow-2xl ring-1 ring-white/10 group"
+              className="mt-16 relative aspect-[4/5] md:aspect-[16/10] rounded-[2rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)] ring-1 ring-white/10 group"
             >
-               <img src="/FotosEvideos/Nivea/WhatsApp%20Image%202026-06-26%20at%2010.27.44.jpeg" alt="Nívea com a Bandeira" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-1000" />
-               <div className="absolute inset-0 bg-black/30 group-hover:bg-transparent transition-colors duration-700" />
+               <img src="/FotosEvideos/nivea_bandeira.webp" alt="Nívea com a Bandeira" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-1000" />
+               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             </motion.div>
           </motion.div>
 
           {/* As Fundadoras */}
-          <div className="flex flex-col md:flex-row-reverse gap-16 items-center">
+          <div className="flex flex-col md:flex-row-reverse gap-16 md:gap-24 items-center">
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               whileInView={{ opacity: 1, x: 0 }}
@@ -188,12 +196,10 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ duration: 1.2, type: "spring" }}
               whileHover={{ scale: 1.05, rotate: 0 }}
-              className="flex-1 relative aspect-[4/5] md:aspect-[3/4] rounded-[2rem] overflow-hidden shadow-[0_0_50px_rgba(255,255,255,0.05)] ring-1 ring-white/10 group"
+              className="flex-1 w-full relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-[0_0_60px_rgba(255,255,255,0.05)] ring-1 ring-white/10 group"
             >
-              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10" />
-              {/* O usuário mencionou que a pasta "Fundadoras" estava sendo usada mas as fotos não apareciam. 
-                  Como a pasta estava vazia, estou usando uma foto de grupo como representação das fundadoras, que pode ser alterada. */}
-              <img src="/FotosEvideos/Nivea/WhatsApp%20Image%202026-06-26%20at%2010.39.37%20(2).jpeg" alt="O Primeiro Encontro (Fundadoras)" className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-1000 ease-out" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent z-10" />
+              <img src="/FotosEvideos/fundadoras.webp" alt="O Primeiro Encontro (Fundadoras)" className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-1000 ease-out" />
               <div className="absolute bottom-8 left-8 z-20">
                 <p className="font-black text-3xl text-white drop-shadow-lg">A Origem</p>
                 <p className="text-gray-300 text-sm font-bold uppercase tracking-widest mt-1">O Primeiro Grupo</p>
@@ -204,52 +210,61 @@ export default function LandingPage() {
       </section>
 
       {/* 3. SEÇÃO "OLHARES" (CINEMATOGRÁFICO) */}
-      <section className="py-32 relative bg-black overflow-hidden flex flex-col items-center justify-center min-h-[80vh]">
-        <div className="absolute inset-0 opacity-40">
-          <img src="/FotosEvideos/IMG_6341.webp" alt="Background Olhares" className="w-full h-full object-cover blur-sm" />
-          <div className="absolute inset-0 bg-black/80" />
-        </div>
+      <section className="py-40 relative bg-black overflow-hidden flex flex-col items-center justify-center min-h-[90vh]">
+        <motion.div className="absolute inset-0 opacity-40" style={{ y: y3 }}>
+          <img src="/FotosEvideos/IMG_6341.webp" alt="Background Olhares" className="w-full h-[120%] object-cover blur-md scale-110" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black" />
+        </motion.div>
 
         <div className="relative z-10 text-center max-w-4xl px-6">
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            whileInView={{ opacity: 1, scale: 1 }}
+            initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
+            whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
             viewport={{ once: true }}
-            transition={{ duration: 1.5 }}
+            transition={{ duration: 1.5, ease: "easeOut" }}
           >
-            <Heart className="h-12 w-12 text-[#F17B37] mx-auto mb-8 opacity-80" />
-            <h2 className="text-4xl md:text-6xl font-black mb-8 leading-tight">
+            <Heart className="h-12 w-12 text-[#F17B37] mx-auto mb-10 opacity-80 drop-shadow-[0_0_15px_rgba(241,123,55,0.5)]" />
+            <h2 className="text-4xl md:text-7xl font-black mb-10 leading-tight drop-shadow-2xl">
               O brilho nos olhos. <br/>O encantamento.
             </h2>
-            <p className="text-xl md:text-2xl text-gray-300 font-light leading-relaxed mb-12">
-              "Hoje, eu continuo me aventurando, mas também de forma profissional. O que me move é levar pessoas a lugares que elas nunca imaginaram que seriam capazes de chegar. Ter o privilégio de viver isso todos os dias é simplesmente indescritível."
+            <p className="text-xl md:text-3xl text-gray-300 font-light leading-relaxed mb-12 drop-shadow-lg max-w-3xl mx-auto italic">
+              "Hoje, eu continuo me aventurando, mas também de forma profissional. O que me move é levar pessoas a lugares que elas nunca imaginaram que seriam capazes de chegar."
             </p>
           </motion.div>
         </div>
       </section>
 
-      {/* 4. GALERIA MASONRY */}
-      <section className="py-24 px-6 bg-[#0F1722]">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-black mb-4">Nossa Comunidade</h2>
-            <p className="text-gray-400">Momentos inesquecíveis vividos em grupo.</p>
+      {/* 4. GALERIA COMUNIDADE E PESSOAS ESPECIAIS (MASONRY PARALLAX) */}
+      <section className="py-32 px-6 bg-[#0F1722] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-white/5 to-[#0F1722] z-0" />
+        
+        <div className="max-w-7xl mx-auto relative z-10">
+          <div className="text-center mb-20">
+            <h2 className="text-5xl font-black mb-4 drop-shadow-xl">Nossa Comunidade</h2>
+            <p className="text-xl text-gray-400">Momentos inesquecíveis vividos juntos.</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <motion.div className="col-span-2 row-span-2 relative aspect-square rounded-[2rem] overflow-hidden shadow-2xl" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
-              <img src="/FotosEvideos/Grupo/IMG_9329.JPG" className="w-full h-full object-cover" alt="Nossa Comunidade 1" />
-              <div className="absolute inset-0 bg-black/10 hover:bg-transparent transition-colors duration-500" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
+            <motion.div style={{ y: y1 }} className="col-span-1 md:col-span-2 row-span-2 relative rounded-[2rem] overflow-hidden shadow-2xl group ring-1 ring-white/10" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/Grupo/IMG_9320%20-%20Copia.JPG" className="w-full h-[120%] object-cover -translate-y-[10%] group-hover:translate-y-0 transition-transform duration-1000" alt="Comunidade" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </motion.div>
-            <motion.div className="relative aspect-square rounded-3xl overflow-hidden shadow-xl" whileHover={{ scale: 0.95 }} transition={{ duration: 0.4 }}>
-              <img src="/FotosEvideos/Grupo/IMG_9347.JPG" className="w-full h-full object-cover" alt="Nossa Comunidade 2" />
+            
+            <motion.div style={{ y: y2 }} className="col-span-1 row-span-1 relative rounded-3xl overflow-hidden shadow-xl group ring-1 ring-white/10" whileHover={{ scale: 0.95 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/Grupo/IMG_0997.JPG" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt="Comunidade" />
             </motion.div>
-            <motion.div className="relative aspect-square rounded-3xl overflow-hidden shadow-xl" whileHover={{ scale: 0.95 }} transition={{ duration: 0.4 }}>
-              <img src="/FotosEvideos/Grupo/IMG_9411.JPG" className="w-full h-full object-cover" alt="Nossa Comunidade 3" />
+
+            <motion.div style={{ y: y3 }} className="col-span-1 row-span-2 relative rounded-[2rem] overflow-hidden shadow-xl group ring-1 ring-white/10" whileHover={{ scale: 0.95 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/PESSOAS%20ESPECIAIS/1647fade-8f9e-4eca-9cb9-bbf9b3fb26b6.jpg" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt="Pessoas Especiais" />
             </motion.div>
-            <motion.div className="col-span-2 relative aspect-[2/1] rounded-[2rem] overflow-hidden shadow-2xl" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
-              <img src="/FotosEvideos/Grupo/IMG_9429.JPG" className="w-full h-full object-cover" alt="Nossa Comunidade 4" />
-              <div className="absolute inset-0 bg-black/10 hover:bg-transparent transition-colors duration-500" />
+
+            <motion.div style={{ y: y1 }} className="col-span-1 row-span-1 relative rounded-3xl overflow-hidden shadow-xl group ring-1 ring-white/10" whileHover={{ scale: 0.95 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/Grupo/5e7df681-58d1-48ae-a6bc-1c9e57a3bcd0.jpg" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt="Grupo" />
+            </motion.div>
+
+            <motion.div style={{ y: y2 }} className="col-span-1 md:col-span-2 row-span-1 relative rounded-[2rem] overflow-hidden shadow-2xl group ring-1 ring-white/10" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/Grupo/IMG_8197.webp" className="w-full h-[140%] object-cover -translate-y-[20%] group-hover:translate-y-0 transition-transform duration-1000" alt="Grupo Expandido" />
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
             </motion.div>
           </div>
         </div>
@@ -263,29 +278,35 @@ export default function LandingPage() {
           viewport={{ once: true }}
           className="max-w-3xl mx-auto"
         >
-          <h2 className="text-4xl md:text-5xl font-black mb-6">Pronto para a sua próxima aventura?</h2>
+          <img src="/FotosEvideos/logo/55C232D4-8B60-45C4-82BC-4B25960F8B60%20Copy.JPG" alt="Mais Trilha Logo" className="h-24 w-24 rounded-full border-4 border-[#F17B37] object-cover mx-auto mb-10 shadow-[0_0_30px_rgba(241,123,55,0.3)]" />
+          
+          <h2 className="text-4xl md:text-5xl font-black mb-6 drop-shadow-xl">Pronto para a sua próxima aventura?</h2>
           <p className="text-xl text-gray-400 mb-12">Junte-se a nós e descubra do que você é capaz.</p>
           
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <button onClick={() => router.push('/agenda')} className="w-full sm:w-auto bg-[#F17B37] hover:bg-[#e06925] text-white px-8 py-4 rounded-full font-bold text-lg transition-all shadow-[0_0_30px_rgba(241,123,55,0.4)] flex items-center justify-center gap-2">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
+            <button onClick={() => router.push('/agenda')} className="w-full sm:w-auto bg-[#F17B37] hover:bg-[#e06925] text-white px-8 py-4 rounded-full font-bold text-lg transition-all shadow-[0_0_30px_rgba(241,123,55,0.4)] hover:shadow-[0_0_50px_rgba(241,123,55,0.6)] flex items-center justify-center gap-2 hover:scale-105">
               <Map className="h-5 w-5" /> Ver Próximas Trilhas
             </button>
-            <a href="https://wa.me/5531998793939?text=Oi Nívea! Quero entrar no grupo VIP do Mais Trilha!" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-full font-bold text-lg transition-all flex items-center justify-center gap-2">
+            <a href="https://wa.me/5531998793939?text=Oi Nívea! Quero entrar no grupo VIP do Mais Trilha!" target="_blank" rel="noopener noreferrer" className="w-full sm:w-auto bg-white/10 hover:bg-white/20 text-white px-8 py-4 rounded-full font-bold text-lg transition-all flex items-center justify-center gap-3 hover:scale-105 ring-1 ring-white/20">
               <Users className="h-5 w-5" /> Entrar no Grupo VIP
             </a>
           </div>
 
-          <div className="mt-20 pt-10 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 text-gray-400">
+          <div className="mt-24 pt-10 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-6 text-gray-400">
             <div className="flex items-center gap-2">
               <TreePine className="h-6 w-6 text-[#F17B37]" />
               <span className="font-bold">Mais Trilha Menos Estresse</span>
             </div>
             
-            <div className="flex items-center gap-6">
-              <a href="https://www.instagram.com/maistrilhamenosestresse/" target="_blank" className="hover:text-white transition-colors flex items-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-instagram"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg> Instagram
+            <div className="flex items-center gap-8">
+              <a href="https://www.instagram.com/maistrilhamenosestresse/" target="_blank" className="hover:text-white transition-colors flex items-center gap-2 group">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-instagram group-hover:scale-110 transition-transform"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg> 
+                Instagram
               </a>
-              <a href="https://wa.me/5531998793939" target="_blank" className="hover:text-white transition-colors flex items-center gap-2">
+              <a href="https://wa.me/5531998793939" target="_blank" className="hover:text-white transition-colors flex items-center gap-2 group">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 group-hover:text-green-500 transition-colors group-hover:scale-110">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                </svg>
                 Fale com a Nívea
               </a>
             </div>
