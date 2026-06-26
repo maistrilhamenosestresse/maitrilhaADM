@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useState, useRef } from "react";
 import { motion, useScroll, useTransform, useSpring } from "framer-motion";
 import { ChevronDown, ArrowRight, TreePine, Map, Users, Heart } from "lucide-react";
@@ -18,6 +20,21 @@ export default function LandingPage() {
   const y1 = useTransform(smoothProgress, [0, 1], [0, -100]);
   const y2 = useTransform(smoothProgress, [0, 1], [0, -250]);
   const y3 = useTransform(smoothProgress, [0, 1], [0, -150]);
+
+  // Slideshow Fundadoras
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const slideImages = [
+    "/FotosEvideos/fundadoras.webp",
+    "/FotosEvideos/nivea_cachoeira.webp",
+    "/FotosEvideos/nivea_bandeira.webp"
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slideImages.length);
+    }, 4000); // 4 seconds per slide
+    return () => clearInterval(timer);
+  }, []);
 
   return (
     <div className="bg-[#0F1722] text-white min-h-screen overflow-x-hidden font-sans selection:bg-[#F17B37] selection:text-white">
@@ -195,14 +212,28 @@ export default function LandingPage() {
               whileInView={{ opacity: 1, scale: 1, rotate: 2 }}
               viewport={{ once: true }}
               transition={{ duration: 1.2, type: "spring" }}
-              whileHover={{ scale: 1.05, rotate: 0 }}
-              className="flex-1 w-full relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-[0_0_60px_rgba(255,255,255,0.05)] ring-1 ring-white/10 group"
+              className="flex-1 w-full relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-[0_0_60px_rgba(255,255,255,0.05)] ring-1 ring-white/10"
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent z-10" />
-              <img src="/FotosEvideos/fundadoras.webp" alt="O Primeiro Encontro (Fundadoras)" className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-1000 ease-out" />
+              
+              {slideImages.map((src, index) => (
+                <motion.img 
+                  key={src}
+                  src={src} 
+                  alt="Fundadoras e Nívea" 
+                  initial={{ opacity: 0, scale: 1 }}
+                  animate={{ 
+                    opacity: currentSlide === index ? 1 : 0,
+                    scale: currentSlide === index ? 1.05 : 1
+                  }}
+                  transition={{ duration: 2, ease: "easeInOut" }}
+                  className="absolute inset-0 object-cover w-full h-full"
+                />
+              ))}
+
               <div className="absolute bottom-8 left-8 z-20">
                 <p className="font-black text-3xl text-white drop-shadow-lg">A Origem</p>
-                <p className="text-gray-300 text-sm font-bold uppercase tracking-widest mt-1">O Primeiro Grupo</p>
+                <p className="text-gray-300 text-sm font-bold uppercase tracking-widest mt-1">Nívea e as Fundadoras</p>
               </div>
             </motion.div>
           </div>
@@ -216,7 +247,7 @@ export default function LandingPage() {
           <div className="absolute inset-0 bg-gradient-to-b from-black via-black/80 to-black" />
         </motion.div>
 
-        <div className="relative z-10 text-center max-w-4xl px-6">
+        <div className="relative z-10 text-center max-w-5xl px-6">
           <motion.div
             initial={{ opacity: 0, scale: 0.9, filter: "blur(10px)" }}
             whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
@@ -224,12 +255,21 @@ export default function LandingPage() {
             transition={{ duration: 1.5, ease: "easeOut" }}
           >
             <Heart className="h-12 w-12 text-[#F17B37] mx-auto mb-10 opacity-80 drop-shadow-[0_0_15px_rgba(241,123,55,0.5)]" />
-            <h2 className="text-4xl md:text-7xl font-black mb-10 leading-tight drop-shadow-2xl">
-              O brilho nos olhos. <br/>O encantamento.
+            <h2 className="text-5xl md:text-8xl font-black mb-10 leading-[0.9] drop-shadow-2xl">
+              Os Olhares <br/> que constroem.
             </h2>
-            <p className="text-xl md:text-3xl text-gray-300 font-light leading-relaxed mb-12 drop-shadow-lg max-w-3xl mx-auto italic">
-              "Hoje, eu continuo me aventurando, mas também de forma profissional. O que me move é levar pessoas a lugares que elas nunca imaginaram que seriam capazes de chegar."
+            <p className="text-xl md:text-2xl text-gray-400 font-light leading-relaxed mb-16 drop-shadow-lg max-w-4xl mx-auto italic border-l-4 border-[#F17B37] pl-6 text-left">
+              "Esta é uma dedicação silenciosa e profunda àqueles que fazem o grupo diariamente. Aqueles cujos passos já marcaram tantas trilhas conosco, cujos olhares viram o sol nascer e se pôr nas montanhas mais difíceis. Vocês são o sangue e o fôlego do Mais Trilha. A força que nos move a cada novo cume."
             </p>
+            
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => router.push('/agenda')}
+              className="inline-flex items-center gap-3 bg-transparent border-2 border-white/20 hover:border-[#F17B37] hover:bg-[#F17B37]/10 text-white px-8 py-4 rounded-full font-medium text-lg transition-all"
+            >
+              Dedique um momento a eles <ArrowRight className="h-5 w-5" />
+            </motion.button>
           </motion.div>
         </div>
       </section>
