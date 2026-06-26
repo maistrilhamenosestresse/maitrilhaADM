@@ -995,31 +995,41 @@ export default function AdminPage() {
                     </div>
 
                     {/* Adicionar Manualmente */}
-                    <form onSubmit={handleAddReserva} className="bg-blue-50/50 p-5 rounded-2xl border border-blue-100 space-y-4">
-                      <h4 className="font-bold text-blue-900 flex items-center gap-2 text-sm"><Plus className="h-4 w-4"/> Inserir Passageiro Manualmente</h4>
-                      <select 
-                        value={novaReservaClientId} 
-                        onChange={(e) => setNovaReservaClientId(e.target.value)}
-                        className="w-full p-3 bg-white border border-blue-200 rounded-xl text-sm outline-none"
-                      >
-                        <option value="">Selecione um cliente cadastrado...</option>
-                        {clients.map(c => (
-                          <option key={c.id} value={c.id}>{c.full_name} ({c.cpf})</option>
-                        ))}
-                      </select>
-                      <div className="flex gap-3">
+                    <form onSubmit={handleAddReserva} className={`${(reservas.filter(r => r.status_pagamento === 'pago' || r.status_pagamento === 'pendente').length >= (selectedAgendaData?.max_capacity || 15)) ? 'bg-gray-100 border-gray-200 opacity-70' : 'bg-blue-50/50 border-blue-100'} p-5 rounded-2xl border space-y-4`}>
+                        <h4 className={`font-bold flex items-center gap-2 text-sm ${(reservas.filter(r => r.status_pagamento === 'pago' || r.status_pagamento === 'pendente').length >= (selectedAgendaData?.max_capacity || 15)) ? 'text-gray-500' : 'text-blue-900'}`}>
+                          <Plus className="h-4 w-4"/> {(reservas.filter(r => r.status_pagamento === 'pago' || r.status_pagamento === 'pendente').length >= (selectedAgendaData?.max_capacity || 15)) ? 'Trilha Esgotada - Inserção Bloqueada' : 'Inserir Passageiro Manualmente'}
+                        </h4>
                         <select 
-                          value={novaReservaStatus} 
-                          onChange={(e) => setNovaReservaStatus(e.target.value)}
-                          className="w-1/2 p-3 bg-white border border-blue-200 rounded-xl text-sm outline-none"
+                          value={novaReservaClientId} 
+                          onChange={(e) => setNovaReservaClientId(e.target.value)}
+                          disabled={(reservas.filter(r => r.status_pagamento === 'pago' || r.status_pagamento === 'pendente').length >= (selectedAgendaData?.max_capacity || 15))}
+                          className="w-full p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none disabled:bg-gray-50 disabled:cursor-not-allowed"
                         >
-                          <option value="pago">PAGO</option>
-                          <option value="pendente">PENDENTE</option>
+                          <option value="">Selecione um cliente cadastrado...</option>
+                          {clients.map(c => (
+                            <option key={c.id} value={c.id}>{c.full_name} ({c.cpf})</option>
+                          ))}
                         </select>
-                        <button type="submit" className="w-1/2 bg-blue-600 text-white font-bold rounded-xl shadow-sm hover:bg-blue-700 transition">Adicionar</button>
-                      </div>
-                    </form>
-                  </>
+                        <div className="flex gap-3">
+                          <select 
+                            value={novaReservaStatus} 
+                            onChange={(e) => setNovaReservaStatus(e.target.value)}
+                            disabled={(reservas.filter(r => r.status_pagamento === 'pago' || r.status_pagamento === 'pendente').length >= (selectedAgendaData?.max_capacity || 15))}
+                            className="w-1/2 p-3 bg-white border border-gray-200 rounded-xl text-sm outline-none disabled:bg-gray-50 disabled:cursor-not-allowed"
+                          >
+                            <option value="pago">PAGO</option>
+                            <option value="pendente">PENDENTE</option>
+                          </select>
+                          <button 
+                            type="submit" 
+                            disabled={(reservas.filter(r => r.status_pagamento === 'pago' || r.status_pagamento === 'pendente').length >= (selectedAgendaData?.max_capacity || 15))}
+                            className={`w-1/2 font-bold rounded-xl shadow-sm transition ${(reservas.filter(r => r.status_pagamento === 'pago' || r.status_pagamento === 'pendente').length >= (selectedAgendaData?.max_capacity || 15)) ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700'}`}
+                          >
+                            Adicionar
+                          </button>
+                        </div>
+                      </form>
+                    </>
                 )}
               </motion.div>
             )}

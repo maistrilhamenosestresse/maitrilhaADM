@@ -144,7 +144,7 @@ export default function LandingPage() {
               className="flex-1 space-y-6"
             >
               <p className="text-2xl leading-relaxed text-gray-300 font-light">
-                Me chamo <strong className="text-white font-medium">Nívea Magalhães</strong>... tenho 35 anos... e há 3 anos venho me aventurando e me desafiando no mundo do ecoturismo.
+                Me chamo <strong className="text-white font-medium">Nívea Maria</strong>... tenho 35 anos... e há 3 anos venho me aventurando e me desafiando no mundo do ecoturismo.
               </p>
               <p className="text-xl leading-relaxed text-gray-400 font-light">
                 Sempre tive uma conexão muito forte com a natureza. Gosto do simples, do essencial. Na minha família, o hábito de acampar sempre esteve presente, mas foi o meu tio quem despertou em mim algo maior. Aquele universo me encantava.
@@ -205,7 +205,7 @@ export default function LandingPage() {
                 Decidi convidar meu tio para refazer uma trilha muito especial: a Cachoeira do Tabuleiro. Ele não pôde ir, então decidi ir sozinha. Ou pelo menos, essa era a ideia.
               </p>
               <p className="text-xl leading-relaxed text-gray-400 font-light">
-                Contei para uma amiga, que chamou outra, e de repente minha mãe também estava dentro. Lá estávamos nós: <strong className="text-white font-medium">cinco mulheres</strong> de madrugada, dentro de um carro, prontas para viver algo que mudaria tudo.
+                Contei para uma amiga, que chamou outra, e de repente minha mãe e minha tia Juma também estavam dentro. Lá estávamos nós: <strong className="text-white font-medium">cinco mulheres</strong> de madrugada, dentro de um carro, prontas para viver algo que mudaria tudo.
               </p>
               <p className="text-xl leading-relaxed text-[#F17B37] font-medium drop-shadow-md">
                 Enfrentamos frio, perrengues, mas nada impediu de ser uma das maiores experiências das nossas vidas. Foi ali que descobri uma coragem que nem sabia que existia em mim.

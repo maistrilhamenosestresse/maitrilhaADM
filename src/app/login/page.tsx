@@ -17,6 +17,19 @@ export default function LoginPage() {
     setLoading(true);
     setMessage(null);
 
+    // E-mails autorizados para acessar o painel de administrador
+    const ALLOWED_EMAILS = [
+      "niveamariamagalhaes28@gmail.com",
+      "wellingtonf.social@gmail.com"
+      // TODO: adicionar o 3º e-mail que o usuário vai passar
+    ];
+
+    if (!ALLOWED_EMAILS.includes(email.toLowerCase().trim())) {
+      setMessage({ type: "error", text: "Acesso Negado: Seu e-mail não tem permissão de administrador." });
+      setLoading(false);
+      return;
+    }
+
     const supabase = createClient();
     
     const { error } = await supabase.auth.signInWithOtp({
