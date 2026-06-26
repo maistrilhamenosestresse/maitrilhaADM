@@ -37,7 +37,8 @@ export const metadata: Metadata = {
     icon: 'https://nyavgcggwygkywjboaxh.supabase.co/storage/v1/object/public/fotos_agendas/logo.png',
     shortcut: 'https://nyavgcggwygkywjboaxh.supabase.co/storage/v1/object/public/fotos_agendas/logo.png',
     apple: 'https://nyavgcggwygkywjboaxh.supabase.co/storage/v1/object/public/fotos_agendas/logo.png',
-  }
+  },
+  manifest: '/manifest.json'
 };
 
 export const viewport = {
@@ -61,6 +62,21 @@ export default function RootLayout({
         {/* Isca para o Warsaw (Diebold Nixdorf) - Evita Hydration Mismatch */}
         <div id="_tela" style={{ display: 'none' }}></div>
         {children}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                  }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                  });
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

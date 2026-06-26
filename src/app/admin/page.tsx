@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { 
   Calendar, DollarSign, FileText, Send, Image as ImageIcon, Video, Loader2, Trash2, 
   CalendarDays, Edit2, Sparkles, CheckCircle2, FileUp, Mic, Square, Navigation, 
-  Camera, AlertCircle, X, Plus, Eye, User, ShieldCheck, Search, ChevronDown, ChevronUp, Clock, MapPin, Users, Printer, Bell 
+  Camera, AlertCircle, X, Plus, Eye, User, ShieldCheck, Search, ChevronDown, ChevronUp, Clock, MapPin, Users, Printer, Bell, LogOut, ExternalLink, DownloadCloud
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
@@ -31,6 +31,14 @@ export default function AdminPage() {
   
   // Novos estados para a UI tipo App
   const [mainTab, setMainTab] = useState<'trilhas' | 'clientes' | 'reservas' | 'financas'>('trilhas');
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    });
+  }, []);
   const [isFormModalOpen, setIsFormModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedClientId, setExpandedClientId] = useState<string | null>(null);
@@ -587,28 +595,70 @@ export default function AdminPage() {
 
   return (
     <div suppressHydrationWarning className="h-[100dvh] print:h-auto print:min-h-screen w-full flex flex-col bg-gray-50 overflow-hidden print:overflow-visible relative">
-      
-      {/* 1. HEADER FIXO ESTILO APP */}
-      <header className="bg-white border-b border-gray-100 px-5 py-4 shrink-0 shadow-sm flex items-center justify-between z-10 print:hidden">
+      <header className="bg-white border-b border-gray-100 px-4 py-4 shrink-0 shadow-sm flex items-center justify-between z-10 print:hidden">
         <div className="flex items-center gap-3">
-          <div className="bg-[#1D2A3A] p-2 rounded-xl shadow-md">
+          <div className="bg-[#1D2A3A] p-2 rounded-xl shadow-md hidden sm:block">
             <ShieldCheck className="h-6 w-6 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-black text-gray-900 leading-tight">Painel Admin</h1>
-            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Mais Trilha Menos Estresse</p>
+            <h1 className="text-lg md:text-xl font-black text-gray-900 leading-tight">Painel Admin</h1>
+            <p className="text-[10px] md:text-[11px] font-bold text-gray-400 uppercase tracking-wider">Mais Trilha Menos Estresse</p>
           </div>
         </div>
         
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 md:gap-4">
             
+            {deferredPrompt && (
+              <button 
+                onClick={async () => {
+                  deferredPrompt.prompt();
+                  const { outcome } = await deferredPrompt.userChoice;
+                  if (outcome === 'accepted') setDeferredPrompt(null);
+                }}
+                className="hidden md:flex items-center gap-1.5 bg-orange-100 text-[#F17B37] hover:bg-orange-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+                title="Instalar Aplicativo"
+              >
+                <DownloadCloud className="h-4 w-4" /> Instalar App
+              </button>
+            )}
+
+            {deferredPrompt && (
+              <button 
+                onClick={async () => {
+                  deferredPrompt.prompt();
+                  const { outcome } = await deferredPrompt.userChoice;
+                  if (outcome === 'accepted') setDeferredPrompt(null);
+                }}
+                className="md:hidden flex items-center justify-center p-2 text-[#F17B37] bg-orange-100 rounded-lg"
+                title="Instalar Aplicativo"
+              >
+                <DownloadCloud className="h-5 w-5" />
+              </button>
+            )}
+
+            <button 
+              onClick={() => window.open('/agenda', '_blank')}
+              className="hidden md:flex items-center gap-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors"
+              title="Acessar Página de Agendas Pública"
+            >
+              <ExternalLink className="h-4 w-4" /> Ver Site
+            </button>
+
+            <button 
+              onClick={() => window.open('/agenda', '_blank')}
+              className="md:hidden flex items-center justify-center p-2 text-gray-500 hover:text-gray-900 bg-gray-100 rounded-lg"
+              title="Acessar Página de Agendas Pública"
+            >
+              <ExternalLink className="h-5 w-5" />
+            </button>
+
             {/* NOTIFICAÇÕES */}
             <div className="relative">
               <button 
                 onClick={handleOpenNotifications}
                 className="relative p-2 text-gray-500 hover:text-gray-900 transition-colors"
               >
-                <Bell className="h-6 w-6" />
+                <Bell className="h-5 w-5 md:h-6 md:w-6" />
                 {unreadCount > 0 && (
                   <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-white"></span>
                 )}
@@ -649,8 +699,11 @@ export default function AdminPage() {
               </AnimatePresence>
             </div>
 
-            <button onClick={handleLogout} className="text-sm font-bold text-gray-500 hover:text-red-500 transition-colors hidden md:block">
+            <button onClick={handleLogout} className="hidden md:flex items-center gap-1.5 text-sm font-bold text-gray-500 hover:text-red-500 transition-colors px-2">
               Sair
+            </button>
+            <button onClick={handleLogout} className="md:hidden flex items-center justify-center p-2 text-gray-500 hover:text-red-500" title="Sair">
+              <LogOut className="h-5 w-5" />
             </button>
           </div>
       </header>
