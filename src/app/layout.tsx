@@ -15,10 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL('https://www.maistrilhasmenosestresse.com'),
   title: "Mais Trilha Menos Estresse",
-  description: "A nossa agenda oficial chegou! Confira nossas próximas trilhas, veja as fotos, roteiros e garanta sua vaga.",
+  description: "Conheça um pouco da nossa história. Somos uma comunidade apaixonada pela natureza, aventura e bem-estar. Venha se desconectar do estresse e se reconectar com a vida através de trilhas incríveis!",
   openGraph: {
     title: "Mais Trilha Menos Estresse",
-    description: "A nossa agenda oficial chegou! Confira nossas próximas trilhas, veja as fotos, roteiros e garanta sua vaga.",
+    description: "Conheça um pouco da nossa história. Somos uma comunidade apaixonada pela natureza, aventura e bem-estar. Venha se desconectar do estresse e se reconectar com a vida através de trilhas incríveis!",
     images: [{
       url: 'https://nyavgcggwygkywjboaxh.supabase.co/storage/v1/object/public/fotos_agendas/logo.png',
       width: 1200,
@@ -30,7 +30,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: "Mais Trilha Menos Estresse",
-    description: "A nossa agenda oficial chegou! Confira nossas próximas trilhas.",
+    description: "Conheça um pouco da nossa história. Venha se desconectar do estresse e se reconectar com a vida através do ecoturismo!",
     images: ['https://nyavgcggwygkywjboaxh.supabase.co/storage/v1/object/public/fotos_agendas/logo.png'],
   },
   icons: {
