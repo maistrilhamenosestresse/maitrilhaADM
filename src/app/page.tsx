@@ -42,8 +42,7 @@ export default function LandingPage() {
       {/* NAVEGAÇÃO */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-4 bg-gradient-to-b from-[#0F1722] to-transparent backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <img src="/FotosEvideos/logo/55C232D4-8B60-45C4-82BC-4B25960F8B60%20Copy.JPG" alt="Mais Trilha Logo" className="h-12 w-12 rounded-full border-2 border-[#F17B37] object-cover shadow-[0_0_15px_rgba(241,123,55,0.4)]" />
-          <span className="font-black text-xl tracking-tighter uppercase drop-shadow-md hidden sm:block">Mais Trilha</span>
+          <img src="/FotosEvideos/logo/55C232D4-8B60-45C4-82BC-4B25960F8B60%20Copy.JPG" alt="Mais Trilha Logo" className="h-12 w-auto max-w-[150px] rounded-md object-contain shadow-[0_0_15px_rgba(241,123,55,0.4)]" />
         </div>
         <div className="flex items-center gap-4">
           <button 
@@ -67,7 +66,7 @@ export default function LandingPage() {
           playsInline
           className="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-60 mix-blend-overlay"
         >
-          <source src="/FotosEvideos/Grupo/D6866C9C-E715-484A-BF5A-9449D2A675BB-Copy.mp4" type="video/mp4" />
+          <source src="/FotosEvideos/Grupo/IMG_9319.MP4" type="video/mp4" />
         </video>
         
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F1722]/40 via-transparent to-[#0F1722] z-10" />
@@ -265,7 +264,7 @@ export default function LandingPage() {
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              onClick={() => router.push('/agenda')}
+              onClick={() => router.push('/olhares')}
               className="inline-flex items-center gap-3 bg-transparent border-2 border-white/20 hover:border-[#F17B37] hover:bg-[#F17B37]/10 text-white px-8 py-4 rounded-full font-medium text-lg transition-all"
             >
               Dedique um momento a eles <ArrowRight className="h-5 w-5" />
@@ -274,7 +273,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 4. GALERIA COMUNIDADE E PESSOAS ESPECIAIS (MASONRY PARALLAX) */}
+      {/* 4. GALERIA COMUNIDADE E PESSOAS ESPECIAIS (MASONRY REAL) */}
       <section className="py-32 px-6 bg-[#0F1722] relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-white/5 to-[#0F1722] z-0" />
         
@@ -284,27 +283,30 @@ export default function LandingPage() {
             <p className="text-xl text-gray-400">Momentos inesquecíveis vividos juntos.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-[300px]">
-            <motion.div style={{ y: y1 }} className="col-span-1 md:col-span-2 row-span-2 relative rounded-[2rem] overflow-hidden shadow-2xl group ring-1 ring-white/10" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
-              <img src="/FotosEvideos/Grupo/IMG_9320%20-%20Copia.JPG" className="w-full h-[120%] object-cover -translate-y-[10%] group-hover:translate-y-0 transition-transform duration-1000" alt="Comunidade" />
+          <div className="columns-1 md:columns-2 lg:columns-3 gap-6 space-y-6">
+            <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/Grupo/IMG_9320%20-%20Copia.JPG" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Comunidade" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </motion.div>
             
-            <motion.div style={{ y: y2 }} className="col-span-1 row-span-1 relative rounded-3xl overflow-hidden shadow-xl group ring-1 ring-white/10" whileHover={{ scale: 0.95 }} transition={{ duration: 0.4 }}>
-              <img src="/FotosEvideos/Grupo/IMG_0997.JPG" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt="Comunidade" />
+            <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/Grupo/IMG_0997.JPG" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Comunidade" />
             </motion.div>
 
-            <motion.div style={{ y: y3 }} className="col-span-1 row-span-2 relative rounded-[2rem] overflow-hidden shadow-xl group ring-1 ring-white/10" whileHover={{ scale: 0.95 }} transition={{ duration: 0.4 }}>
-              <img src="/FotosEvideos/PESSOAS%20ESPECIAIS/1647fade-8f9e-4eca-9cb9-bbf9b3fb26b6.jpg" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt="Pessoas Especiais" />
+            <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/PESSOAS%20ESPECIAIS/1647fade-8f9e-4eca-9cb9-bbf9b3fb26b6.jpg" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Pessoas Especiais" />
             </motion.div>
 
-            <motion.div style={{ y: y1 }} className="col-span-1 row-span-1 relative rounded-3xl overflow-hidden shadow-xl group ring-1 ring-white/10" whileHover={{ scale: 0.95 }} transition={{ duration: 0.4 }}>
-              <img src="/FotosEvideos/Grupo/5e7df681-58d1-48ae-a6bc-1c9e57a3bcd0.jpg" className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt="Grupo" />
+            <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/Grupo/5e7df681-58d1-48ae-a6bc-1c9e57a3bcd0.jpg" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo" />
             </motion.div>
 
-            <motion.div style={{ y: y2 }} className="col-span-1 md:col-span-2 row-span-1 relative rounded-[2rem] overflow-hidden shadow-2xl group ring-1 ring-white/10" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
-              <img src="/FotosEvideos/Grupo/IMG_8197.webp" className="w-full h-[140%] object-cover -translate-y-[20%] group-hover:translate-y-0 transition-transform duration-1000" alt="Grupo Expandido" />
-              <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors duration-500" />
+            <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/Grupo/IMG_8197.webp" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Expandido" />
+            </motion.div>
+            
+            <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/PESSOAS%20ESPECIAIS/IMG_1809.webp" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Mais" />
             </motion.div>
           </div>
         </div>
@@ -318,7 +320,7 @@ export default function LandingPage() {
           viewport={{ once: true }}
           className="max-w-3xl mx-auto"
         >
-          <img src="/FotosEvideos/logo/55C232D4-8B60-45C4-82BC-4B25960F8B60%20Copy.JPG" alt="Mais Trilha Logo" className="h-24 w-24 rounded-full border-4 border-[#F17B37] object-cover mx-auto mb-10 shadow-[0_0_30px_rgba(241,123,55,0.3)]" />
+          <img src="/FotosEvideos/logo/55C232D4-8B60-45C4-82BC-4B25960F8B60%20Copy.JPG" alt="Mais Trilha Logo" className="h-20 w-auto max-w-[200px] rounded-lg object-contain mx-auto mb-10 shadow-[0_0_30px_rgba(241,123,55,0.3)]" />
           
           <h2 className="text-4xl md:text-5xl font-black mb-6 drop-shadow-xl">Pronto para a sua próxima aventura?</h2>
           <p className="text-xl text-gray-400 mb-12">Junte-se a nós e descubra do que você é capaz.</p>
