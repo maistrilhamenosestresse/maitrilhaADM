@@ -2,9 +2,8 @@
 
 import { useEffect, useState, useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { ChevronDown, Instagram, ArrowRight, TreePine, Map, Users, Heart } from "lucide-react";
+import { ChevronDown, ArrowRight, TreePine, Map, Users, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 
 export default function LandingPage() {
   const router = useRouter();
@@ -257,7 +256,7 @@ export default function LandingPage() {
             
             <div className="flex items-center gap-6">
               <a href="https://www.instagram.com/maistrilhamenosestresse/" target="_blank" className="hover:text-white transition-colors flex items-center gap-2">
-                <Instagram className="h-5 w-5" /> Instagram
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-instagram"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg> Instagram
               </a>
               <a href="https://wa.me/5531998793939" target="_blank" className="hover:text-white transition-colors flex items-center gap-2">
                 Fale com a Nívea
