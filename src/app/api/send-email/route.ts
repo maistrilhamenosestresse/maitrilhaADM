@@ -90,6 +90,22 @@ export async function POST(request: Request) {
           </div>
         `
       };
+    } else if (data.type === 'security_log') {
+      mailOptions = {
+        from: `Mais Trilha Menos Estresse <${process.env.GMAIL_USER}>`,
+        to: data.to,
+        subject: data.subject,
+        text: data.text
+      };
+    } else if (data.to && data.subject) {
+      // Caso genérico se enviar direto os campos básicos
+      mailOptions = {
+        from: `Mais Trilha Menos Estresse <${process.env.GMAIL_USER}>`,
+        to: data.to,
+        subject: data.subject,
+        text: data.text,
+        html: data.html
+      };
     }
 
     if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
