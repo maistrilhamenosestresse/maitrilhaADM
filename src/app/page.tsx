@@ -7,11 +7,11 @@ import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
   const router = useRouter();
-  
+
   // Parallax Setup
   const { scrollYProgress } = useScroll();
   const smoothProgress = useSpring(scrollYProgress, { stiffness: 100, damping: 30, restDelta: 0.001 });
-  
+
   const heroOpacity = useTransform(smoothProgress, [0, 0.2], [1, 0]);
   const heroScale = useTransform(smoothProgress, [0, 0.2], [1, 1.1]);
   const heroY = useTransform(smoothProgress, [0, 0.2], [0, 100]);
@@ -24,9 +24,10 @@ export default function LandingPage() {
   // Slideshow Fundadoras
   const [currentSlide, setCurrentSlide] = useState(0);
   const slideImages = [
-    "/FotosEvideos/fundadoras.webp",
-    "/FotosEvideos/nivea_cachoeira.webp",
-    "/FotosEvideos/nivea_bandeira.webp"
+    "/FotosEvideos/Nivea/WhatsApp Image 2026-06-26 at 10.39.37 (1).jpeg",
+
+    "/FotosEvideos/Nivea/IMG_0521.JPG",
+
   ];
 
   useEffect(() => {
@@ -38,14 +39,14 @@ export default function LandingPage() {
 
   return (
     <div className="bg-[#0F1722] text-white min-h-screen overflow-x-hidden font-sans selection:bg-[#F17B37] selection:text-white">
-      
+
       {/* NAVEGAÇÃO */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-12 py-4 bg-gradient-to-b from-[#0F1722] to-transparent backdrop-blur-sm">
         <div className="flex items-center gap-3">
-          <img src="/FotosEvideos/logo/55C232D4-8B60-45C4-82BC-4B25960F8B60%20Copy.JPG" alt="Mais Trilha Logo" className="h-12 w-auto max-w-[150px] rounded-md object-contain shadow-[0_0_15px_rgba(241,123,55,0.4)]" />
+          <img src="/FotosEvideos/logo/55C232D4-8B60-45C4-82BC-4B25960F8B60%20Copy.JPG" alt="Mais Trilha Logo" className="h-14 w-14 rounded-full aspect-square object-cover object-center shadow-[0_0_15px_rgba(241,123,55,0.4)] border-2 border-[#F17B37]/30" />
         </div>
         <div className="flex items-center gap-4">
-          <button 
+          <button
             onClick={() => router.push('/agenda')}
             className="bg-[#F17B37] hover:bg-[#e06925] text-white px-6 py-2.5 rounded-full font-bold text-sm transition-all hover:scale-105 shadow-[0_0_20px_rgba(241,123,55,0.3)]"
           >
@@ -55,20 +56,20 @@ export default function LandingPage() {
       </nav>
 
       {/* 1. HERO SECTION */}
-      <motion.section 
+      <motion.section
         style={{ opacity: heroOpacity, scale: heroScale, y: heroY }}
         className="relative h-[100dvh] w-full flex flex-col items-center justify-center overflow-hidden"
       >
-        <video 
-          autoPlay 
-          loop 
-          muted 
+        <video
+          autoPlay
+          loop
+          muted
           playsInline
-          className="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-60 mix-blend-overlay"
+          className="absolute top-0 left-0 w-full h-full object-cover z-0 opacity-150 mix-blend-overlay"
         >
-          <source src="/FotosEvideos/Grupo/IMG_9319.MP4" type="video/mp4" />
+          <source src="/FotosEvideos/Nivea/video.mp4" type="video/mp4" />
         </video>
-        
+
         <div className="absolute inset-0 bg-gradient-to-b from-[#0F1722]/40 via-transparent to-[#0F1722] z-10" />
         <div className="absolute inset-0 bg-black/20 z-10" />
 
@@ -82,8 +83,8 @@ export default function LandingPage() {
               Descubra uma <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F17B37] to-[#f9a03f]">coragem</span> que você nem sabia que existia.
             </h1>
           </motion.div>
-          
-          <motion.p 
+
+          <motion.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 1.5, delay: 0.8 }}
@@ -92,7 +93,7 @@ export default function LandingPage() {
             Uma conexão indescritível com a natureza. Superação, encontros reais e paisagens que mudam a forma como você vê o mundo.
           </motion.p>
 
-          <motion.button 
+          <motion.button
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.8, delay: 1.2 }}
@@ -103,7 +104,7 @@ export default function LandingPage() {
           </motion.button>
         </div>
 
-        <motion.div 
+        <motion.div
           animate={{ y: [0, 10, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
           className="absolute bottom-10 z-20 text-gray-400 drop-shadow-md"
@@ -115,7 +116,7 @@ export default function LandingPage() {
       {/* 2. A HISTÓRIA (NÍVEA E AS FUNDADORAS) */}
       <section className="py-24 md:py-40 px-6 relative z-20 bg-[#0F1722] overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#F17B37]/5 via-[#0F1722]/80 to-[#0F1722] z-0" />
-        
+
         <div className="max-w-6xl mx-auto relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 50 }}
@@ -144,7 +145,7 @@ export default function LandingPage() {
                 Sempre tive uma conexão muito forte com a natureza. Gosto do simples, do essencial. Na minha família, o hábito de acampar sempre esteve presente, mas foi o meu tio quem despertou em mim algo maior. Aquele universo me encantava.
               </p>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.9, rotate: 3 }}
               whileInView={{ opacity: 1, scale: 1, rotate: -2 }}
@@ -154,7 +155,7 @@ export default function LandingPage() {
               className="flex-1 w-full relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-[0_0_60px_rgba(241,123,55,0.15)] ring-1 ring-white/10 group"
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent z-10" />
-              <img src="/FotosEvideos/nivea_cachoeira.webp" alt="Nívea na Cachoeira" className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-1000 ease-out" />
+              <img src="/FotosEvideos/Nivea/WhatsApp Image 2026-06-26 at 10.28.20.jpeg" alt="Nívea na Cachoeira" className="object-cover w-full h-full group-hover:scale-110 transition-transform duration-1000 ease-out" />
               <div className="absolute bottom-8 left-8 z-20">
                 <p className="font-black text-3xl text-white drop-shadow-lg">Nívea</p>
                 <p className="text-[#F17B37] text-sm font-bold uppercase tracking-widest mt-1 drop-shadow-md">A Fundadora</p>
@@ -175,14 +176,14 @@ export default function LandingPage() {
               "Mesmo com esse sonho dentro de mim... por muito tempo acreditei que aquilo não era pra mim. Que não era para uma mulher... casada... mãe... aos 32 anos."
             </p>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
               whileInView={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, delay: 0.3 }}
               className="mt-16 relative aspect-[4/5] md:aspect-[16/10] rounded-[2rem] overflow-hidden shadow-[0_0_80px_rgba(0,0,0,0.5)] ring-1 ring-white/10 group"
             >
-               <img src="/FotosEvideos/nivea_bandeira.webp" alt="Nívea com a Bandeira" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-1000" />
-               <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+              <img src="/FotosEvideos//Nivea/IMG_3883.webp" alt="Nívea com a Bandeira" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-1000" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             </motion.div>
           </motion.div>
 
@@ -205,7 +206,7 @@ export default function LandingPage() {
                 Enfrentamos frio, perrengues, mas nada impediu de ser uma das maiores experiências das nossas vidas. Foi ali que descobri uma coragem que nem sabia que existia em mim.
               </p>
             </motion.div>
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.9, rotate: -3 }}
               whileInView={{ opacity: 1, scale: 1, rotate: 2 }}
@@ -214,14 +215,14 @@ export default function LandingPage() {
               className="flex-1 w-full relative aspect-[4/5] rounded-[2rem] overflow-hidden shadow-[0_0_60px_rgba(255,255,255,0.05)] ring-1 ring-white/10"
             >
               <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/10 to-transparent z-10" />
-              
+
               {slideImages.map((src, index) => (
-                <motion.img 
+                <motion.img
                   key={src}
-                  src={src} 
-                  alt="Fundadoras e Nívea" 
+                  src={src}
+                  alt="Fundadoras e Nívea"
                   initial={{ opacity: 0, scale: 1 }}
-                  animate={{ 
+                  animate={{
                     opacity: currentSlide === index ? 1 : 0,
                     scale: currentSlide === index ? 1.05 : 1
                   }}
@@ -255,12 +256,12 @@ export default function LandingPage() {
           >
             <Heart className="h-12 w-12 text-[#F17B37] mx-auto mb-10 opacity-80 drop-shadow-[0_0_15px_rgba(241,123,55,0.5)]" />
             <h2 className="text-5xl md:text-8xl font-black mb-10 leading-[0.9] drop-shadow-2xl">
-              Os Olhares <br/> que constroem.
+              Os Olhares <br /> que constroem.
             </h2>
             <p className="text-xl md:text-2xl text-gray-400 font-light leading-relaxed mb-16 drop-shadow-lg max-w-4xl mx-auto italic border-l-4 border-[#F17B37] pl-6 text-left">
               "Esta é uma dedicação silenciosa e profunda àqueles que fazem o grupo diariamente. Aqueles cujos passos já marcaram tantas trilhas conosco, cujos olhares viram o sol nascer e se pôr nas montanhas mais difíceis. Vocês são o sangue e o fôlego do Mais Trilha. A força que nos move a cada novo cume."
             </p>
-            
+
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -276,7 +277,7 @@ export default function LandingPage() {
       {/* 4. GALERIA COMUNIDADE E PESSOAS ESPECIAIS (MASONRY REAL) */}
       <section className="py-32 px-6 bg-[#0F1722] relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,_var(--tw-gradient-stops))] from-white/5 to-[#0F1722] z-0" />
-        
+
         <div className="max-w-7xl mx-auto relative z-10">
           <div className="text-center mb-20">
             <h2 className="text-5xl font-black mb-4 drop-shadow-xl">Nossa Comunidade</h2>
@@ -288,7 +289,7 @@ export default function LandingPage() {
               <img src="/FotosEvideos/Grupo/IMG_9320%20-%20Copia.JPG" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Comunidade" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
             </motion.div>
-            
+
             <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
               <img src="/FotosEvideos/Grupo/IMG_0997.JPG" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Comunidade" />
             </motion.div>
@@ -304,9 +305,31 @@ export default function LandingPage() {
             <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
               <img src="/FotosEvideos/Grupo/IMG_8197.webp" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Expandido" />
             </motion.div>
-            
+
             <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
               <img src="/FotosEvideos/PESSOAS%20ESPECIAIS/IMG_1809.webp" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Mais" />
+            </motion.div>
+
+
+
+
+            <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/Grupo/IMG_8162 - Copia.webp" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Mais" />
+            </motion.div>
+            <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/Grupo/IMG_9430 - Copia.JPG" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Mais" />
+            </motion.div>
+            <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/Grupo/IMG_9317 - Copia.JPG" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Mais" />
+            </motion.div>
+            <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/Grupo/IMG_6178.webp" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Mais" />
+            </motion.div>
+            <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/PESSOAS%20ESPECIAIS/59b3598c-060a-48c1-a372-894e60c16d63 Copy.JPG" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Mais" />
+            </motion.div>
+            <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
+              <img src="/FotosEvideos/PESSOAS%20ESPECIAIS/IMG_5466.webp" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Mais" />
             </motion.div>
           </div>
         </div>
@@ -314,17 +337,17 @@ export default function LandingPage() {
 
       {/* 5. CALL TO ACTION & FOOTER */}
       <section className="py-32 relative bg-gradient-to-t from-black to-[#0F1722] text-center px-6">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           className="max-w-3xl mx-auto"
         >
-          <img src="/FotosEvideos/logo/55C232D4-8B60-45C4-82BC-4B25960F8B60%20Copy.JPG" alt="Mais Trilha Logo" className="h-20 w-auto max-w-[200px] rounded-lg object-contain mx-auto mb-10 shadow-[0_0_30px_rgba(241,123,55,0.3)]" />
-          
+          <img src="/FotosEvideos/logo/55C232D4-8B60-45C4-82BC-4B25960F8B60%20Copy.JPG" alt="Mais Trilha Logo" className="h-32 w-32 rounded-full aspect-square object-cover object-center mx-auto mb-10 shadow-[0_0_30px_rgba(241,123,55,0.3)] border-4 border-[#F17B37]/50" />
+
           <h2 className="text-4xl md:text-5xl font-black mb-6 drop-shadow-xl">Pronto para a sua próxima aventura?</h2>
           <p className="text-xl text-gray-400 mb-12">Junte-se a nós e descubra do que você é capaz.</p>
-          
+
           <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
             <button onClick={() => router.push('/agenda')} className="w-full sm:w-auto bg-[#F17B37] hover:bg-[#e06925] text-white px-8 py-4 rounded-full font-bold text-lg transition-all shadow-[0_0_30px_rgba(241,123,55,0.4)] hover:shadow-[0_0_50px_rgba(241,123,55,0.6)] flex items-center justify-center gap-2 hover:scale-105">
               <Map className="h-5 w-5" /> Ver Próximas Trilhas
@@ -339,15 +362,15 @@ export default function LandingPage() {
               <TreePine className="h-6 w-6 text-[#F17B37]" />
               <span className="font-bold">Mais Trilha Menos Estresse</span>
             </div>
-            
+
             <div className="flex items-center gap-8">
               <a href="https://www.instagram.com/maistrilhamenosestresse/" target="_blank" className="hover:text-white transition-colors flex items-center gap-2 group">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-instagram group-hover:scale-110 transition-transform"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg> 
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-instagram group-hover:scale-110 transition-transform"><rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" /></svg>
                 Instagram
               </a>
               <a href="https://wa.me/5531998793939" target="_blank" className="hover:text-white transition-colors flex items-center gap-2 group">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="text-gray-400 group-hover:text-green-500 transition-colors group-hover:scale-110">
-                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/>
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z" />
                 </svg>
                 Fale com a Nívea
               </a>

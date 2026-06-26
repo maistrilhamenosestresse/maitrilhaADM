@@ -1,15 +1,26 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion, useScroll, useTransform } from "framer-motion";
 import { ArrowLeft, Quote, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function OlharesPage() {
   const router = useRouter();
+  const { scrollYProgress } = useScroll();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Efeito Parallax super suave para os textos e partículas
+  const yHero = useTransform(scrollYProgress, [0, 1], [0, 300]);
+  const opacityHero = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
 
   const olhares = [
     {
-      src: "/FotosEvideos/OLHARES/65C93F8F-E396-47C3-AC11-432631232140.jpg",
+      src: "/FotosEvideos/OLHARES/IMG_8892.JPG",
       text: "A força que nos faz dar o próximo passo, mesmo quando o cansaço bate."
     },
     {
@@ -17,11 +28,11 @@ export default function OlharesPage() {
       text: "A alegria de chegar ao topo e saber que não estamos sozinhos."
     },
     {
-      src: "/FotosEvideos/OLHARES/IMG_8892.JPG",
+      src: "/FotosEvideos/OLHARES/SCRL_0007.jpg",
       text: "A paz que só se encontra depois de vencer uma montanha."
     },
     {
-      src: "/FotosEvideos/OLHARES/IMG_8893.JPG",
+      src: "/FotosEvideos/OLHARES/IMG_8892 - Copia.JPG",
       text: "Os encontros reais que a natureza nos proporciona."
     }
   ];
@@ -29,6 +40,34 @@ export default function OlharesPage() {
   return (
     <div className="bg-[#05080c] text-white min-h-screen overflow-x-hidden font-sans selection:bg-[#F17B37] selection:text-white">
       
+      {/* PARTÍCULAS DE POEIRA CINEMATOGRÁFICAS */}
+      {isClient && (
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden opacity-40">
+          {[...Array(40)].map((_, i) => (
+            <motion.div
+              key={i}
+              className="absolute w-1 h-1 bg-white rounded-full blur-[1px]"
+              initial={{
+                x: Math.random() * window.innerWidth,
+                y: Math.random() * window.innerHeight,
+                opacity: Math.random() * 0.5 + 0.1,
+                scale: Math.random() * 2 + 0.5,
+              }}
+              animate={{
+                y: [null, Math.random() * -200 - 100],
+                x: [null, Math.random() * 100 - 50],
+                opacity: [null, 0, Math.random() * 0.8, 0],
+              }}
+              transition={{
+                duration: Math.random() * 10 + 15,
+                repeat: Infinity,
+                ease: "linear",
+              }}
+            />
+          ))}
+        </div>
+      )}
+
       {/* NAVEGAÇÃO MINIMALISTA */}
       <nav className="fixed top-0 left-0 right-0 z-50 p-6">
         <button 
@@ -40,14 +79,28 @@ export default function OlharesPage() {
         </button>
       </nav>
 
-      {/* HERO DRAMÁTICO */}
+      {/* HERO DRAMÁTICO COM FUNDO FOTOGRÁFICO */}
       <section className="relative min-h-[70vh] flex flex-col items-center justify-center text-center px-6 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#F17B37]/10 via-[#05080c]/90 to-[#05080c] z-0" />
+        {/* A imagem de fundo (os olhares específicos pedidos) com máscara de transparência */}
+        <div 
+          className="absolute inset-0 z-0 pointer-events-none flex items-center justify-center"
+          style={{
+            WebkitMaskImage: 'radial-gradient(ellipse at center, black 10%, transparent 100%)',
+            maskImage: 'radial-gradient(ellipse at center, black 10%, transparent 65%)'
+          }}
+        >
+          <img 
+            src="/FotosEvideos/OLHARES/IMG_8893%20-%20Copia%20(2).JPG" 
+            alt="Olhares Especiais" 
+            className="w-full h-[50vh] md:h-full object-contain md:object-cover opacity-20 grayscale"
+          />
+        </div>
         
         <motion.div 
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
+          style={{ y: yHero, opacity: opacityHero }}
+          initial={{ opacity: 0, filter: "blur(20px)", scale: 1.1 }}
+          animate={{ opacity: 1, filter: "blur(0px)", scale: 1 }}
+          transition={{ duration: 2.5, ease: [0.16, 1, 0.3, 1] }}
           className="relative z-10 max-w-4xl"
         >
           <Quote className="h-16 w-16 text-[#F17B37] mx-auto mb-8 opacity-50 drop-shadow-[0_0_15px_rgba(241,123,55,0.4)]" />
@@ -61,23 +114,29 @@ export default function OlharesPage() {
       </section>
 
       {/* GALERIA CINEMATOGRÁFICA DE OLHARES */}
-      <section className="py-20 px-6 max-w-7xl mx-auto space-y-40">
+      <section className="py-20 px-6 max-w-7xl mx-auto space-y-40 relative z-10">
         {olhares.map((item, index) => (
           <motion.div 
             key={item.src}
-            initial={{ opacity: 0, y: 100 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 150, filter: "blur(15px)" }}
+            whileInView={{ opacity: 1, y: 0, filter: "blur(0px)" }}
             viewport={{ once: true, margin: "-100px" }}
-            transition={{ duration: 1.5, ease: "easeOut" }}
+            transition={{ duration: 2, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
             className={`flex flex-col ${index % 2 === 0 ? 'md:flex-row' : 'md:flex-row-reverse'} gap-12 md:gap-24 items-center`}
           >
             <div className="flex-1 w-full relative group">
-              <div className="absolute -inset-4 bg-gradient-to-r from-[#F17B37]/20 to-transparent blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
-              <div className="relative aspect-[4/5] md:aspect-square overflow-hidden rounded-2xl shadow-[0_0_50px_rgba(0,0,0,0.8)] border border-white/5">
+              {/* Máscara de transparência real, agora com degradê extremamente suave para não ficar chapado */}
+              <div 
+                className="relative aspect-[4/5] md:aspect-[4/4]"
+                style={{
+                  WebkitMaskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)',
+                  maskImage: 'radial-gradient(ellipse at center, black 30%, transparent 75%)'
+                }}
+              >
                 <img 
                   src={item.src} 
                   alt="Um olhar nas trilhas" 
-                  className="w-full h-full object-cover grayscale opacity-70 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-105 transition-all duration-1000 ease-out"
+                  className="w-full h-full object-cover object-center grayscale opacity-60 group-hover:grayscale-0 group-hover:opacity-100 group-hover:scale-110 transition-all duration-[2000ms] ease-out"
                 />
               </div>
             </div>
