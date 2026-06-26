@@ -4,6 +4,10 @@ export async function POST(request: Request) {
   try {
     const { reserva_id, agenda_id, agenda_title, price, customer } = await request.json();
 
+    const host = request.headers.get('host') || 'localhost:3000';
+    const protocol = request.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
+
     if (!reserva_id || !price) {
       return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });
     }
@@ -17,9 +21,9 @@ export async function POST(request: Request) {
     // Montando a requisição para a InfinitePay
     const payload = {
       handle: infiniteTag,
-      // Usaremos a própria URL base do site atual para o webhook dinamicamente
-      redirect_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/sucesso?agenda_id=${agenda_id || reserva_id}`,
-      webhook_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/webhooks/infinitepay`,
+      // Usaremos a URL base extraída da própria requisição (dinâmica)
+      redirect_url: `${baseUrl}/sucesso?agenda_id=${agenda_id || reserva_id}`,
+      webhook_url: `${baseUrl}/api/webhooks/infinitepay`,
       order_nsu: order_nsu,
       customer: customer,
       items: [

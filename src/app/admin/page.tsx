@@ -136,10 +136,10 @@ export default function AdminPage() {
 
   const fetchAgendasAndCleanup = async () => {
     setIsFetching(true);
-    try {
-      const { data, error } = await supabase.from('agendas').select('*').order('date', { ascending: true });
-      if (error) throw error;
-      setAgendas(data || []);
+      try {
+        const { data, error } = await supabase.from('agendas').select('*, reservas(status_pagamento)').order('date', { ascending: true });
+        if (error) throw error;
+        setAgendas(data || []);
       
       const { data: statsData } = await supabase.from('global_stats').select('total_views').eq('id', 1).single();
       if (statsData) setGlobalViews(statsData.total_views || 0);
@@ -697,48 +697,57 @@ export default function AdminPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {agendas.map((agenda) => (
-                        <div key={agenda.id} className={`bg-white rounded-2xl border transition-all duration-300 overflow-hidden shadow-sm ${expandedAgendaId === agenda.id ? 'border-[#F17B37] ring-1 ring-[#F17B37]/20' : 'border-gray-100 hover:shadow-md'}`}>
-                          <div 
-                            onClick={() => setExpandedAgendaId(expandedAgendaId === agenda.id ? null : agenda.id)}
-                            className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 gap-4"
-                          >
-                            <div className="flex items-center gap-4 min-w-0 flex-1">
-                              <div className="h-14 w-14 rounded-xl bg-[#F17B37]/10 flex flex-col items-center justify-center shrink-0 border border-[#F17B37]/20">
-                                <span className="text-xs font-bold text-[#F17B37]">{formatDateDisplay(agenda.date).substring(0, 5)}</span>
-                              </div>
-                              <div className="flex-1 min-w-0 pr-2">
-                                <h4 className="font-bold text-gray-900 truncate">{agenda.title}</h4>
-                                <div className="flex items-center gap-3 mt-0.5">
-                                  <p className="text-sm font-medium text-green-600">R$ {agenda.price}</p>
-                                  <span className="flex items-center gap-1 text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">
-                                    <Eye className="h-3 w-3" /> {agenda.views || 0}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="shrink-0 text-gray-400">
-                              {expandedAgendaId === agenda.id ? <ChevronUp /> : <ChevronDown />}
-                            </div>
-                          </div>
+                      {agendas.map((agenda) => {
+                        const occupied = agenda.reservas ? agenda.reservas.filter((r: any) => r.status_pagamento === 'pago' || r.status_pagamento === 'pendente').length : 0;
+                        const maxCap = agenda.max_capacity || 15;
+                        const isFull = occupied >= maxCap;
 
-                          <AnimatePresence>
-                            {expandedAgendaId === agenda.id && (
-                              <motion.div 
-                                initial={{ height: 0, opacity: 0 }} 
-                                animate={{ height: 'auto', opacity: 1 }} 
-                                exit={{ height: 0, opacity: 0 }}
-                                className="border-t border-gray-100 bg-gray-50/50"
-                              >
-                                <div className="p-4 flex flex-col sm:flex-row items-center justify-end gap-3">
-                                  <button onClick={() => handleEdit(agenda)} className="w-full sm:w-auto py-2.5 px-6 bg-blue-50 text-blue-600 font-bold rounded-xl hover:bg-blue-100 transition flex items-center justify-center gap-2"><Edit2 className="h-4 w-4" /> Editar Trilha</button>
-                                  <button onClick={() => deleteAgenda(agenda.id)} className="w-full sm:w-auto py-2.5 px-6 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition flex items-center justify-center gap-2"><Trash2 className="h-4 w-4" /> Excluir</button>
+                        return (
+                          <div key={agenda.id} className={`bg-white rounded-2xl border transition-all duration-300 overflow-hidden shadow-sm ${expandedAgendaId === agenda.id ? 'border-[#F17B37] ring-1 ring-[#F17B37]/20' : 'border-gray-100 hover:shadow-md'} ${isFull ? 'opacity-70 grayscale' : ''}`}>
+                            <div 
+                              onClick={() => setExpandedAgendaId(expandedAgendaId === agenda.id ? null : agenda.id)}
+                              className="p-4 flex items-center justify-between cursor-pointer hover:bg-gray-50 gap-4"
+                            >
+                              <div className="flex items-center gap-4 min-w-0 flex-1">
+                                <div className={`h-14 w-14 rounded-xl flex flex-col items-center justify-center shrink-0 border ${isFull ? 'bg-gray-100 border-gray-200' : 'bg-[#F17B37]/10 border-[#F17B37]/20'}`}>
+                                  <span className={`text-xs font-bold ${isFull ? 'text-gray-500' : 'text-[#F17B37]'}`}>{formatDateDisplay(agenda.date).substring(0, 5)}</span>
                                 </div>
-                              </motion.div>
-                            )}
-                          </AnimatePresence>
-                        </div>
-                      ))}
+                                <div className="flex-1 min-w-0 pr-2">
+                                  <div className="flex items-center gap-2">
+                                    <h4 className="font-bold text-gray-900 truncate">{agenda.title}</h4>
+                                    {isFull && <span className="bg-red-100 text-red-600 text-[9px] font-black uppercase px-2 py-0.5 rounded border border-red-200">Esgotado</span>}
+                                  </div>
+                                  <div className="flex items-center gap-3 mt-0.5">
+                                    <p className="text-sm font-medium text-green-600">R$ {agenda.price}</p>
+                                    <span className="flex items-center gap-1 text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-100">
+                                      <Eye className="h-3 w-3" /> {agenda.views || 0}
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="shrink-0 text-gray-400">
+                                {expandedAgendaId === agenda.id ? <ChevronUp /> : <ChevronDown />}
+                              </div>
+                            </div>
+
+                            <AnimatePresence>
+                              {expandedAgendaId === agenda.id && (
+                                <motion.div 
+                                  initial={{ height: 0, opacity: 0 }} 
+                                  animate={{ height: 'auto', opacity: 1 }} 
+                                  exit={{ height: 0, opacity: 0 }}
+                                  className="border-t border-gray-100 bg-gray-50/50"
+                                >
+                                  <div className="p-4 flex flex-col sm:flex-row items-center justify-end gap-3">
+                                    <button onClick={() => handleEdit(agenda)} className="w-full sm:w-auto py-2.5 px-6 bg-blue-50 text-blue-600 font-bold rounded-xl hover:bg-blue-100 transition flex items-center justify-center gap-2"><Edit2 className="h-4 w-4" /> Editar Trilha</button>
+                                    <button onClick={() => deleteAgenda(agenda.id)} className="w-full sm:w-auto py-2.5 px-6 bg-red-50 text-red-600 font-bold rounded-xl hover:bg-red-100 transition flex items-center justify-center gap-2"><Trash2 className="h-4 w-4" /> Excluir</button>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>
