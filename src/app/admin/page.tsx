@@ -206,9 +206,10 @@ export default function AdminPage() {
   }, [chatHistory, isAssistantProcessing]);
 
   // --- Funções de Clientes ---
+  const normalizeString = (str: string) => str ? str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() : "";
   const filteredClients = clients.filter(c => 
-    c.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-    c.cpf.includes(searchTerm)
+    normalizeString(c.full_name).includes(normalizeString(searchTerm)) || 
+    (c.cpf && c.cpf.includes(searchTerm))
   );
 
   const toggleClientExpand = (id: string) => {

@@ -12,7 +12,9 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
 
-    // Dados enviados pelo Webhook da InfinitePay
+    // Dados enviados pelo Webhook da InfinitePay (podem vir dentro de payload, data, ou direto na raiz)
+    const payloadInfo = data.payload || data.data || data;
+
     const { 
       invoice_slug, 
       amount, 
@@ -20,9 +22,25 @@ export async function POST(request: Request) {
       capture_method, 
       transaction_nsu, 
       order_nsu 
-    } = data;
+    } = payloadInfo;
+
+    // Se o evento não for de pagamento aprovado, podemos ignorar (opcional)
+    if (data.event && data.event !== 'payment_approved') {
+      console.log('Ignorando evento:', data.event);
+      return NextResponse.json({ success: true, message: 'Evento ignorado' }, { status: 200 });
+    }
 
     if (!order_nsu) {
+      console.error('Webhook Inválido. Payload recebido:', JSON.stringify(data));
+      // Tentar salvar a falha na tabela de notificações para debug visual no painel
+      try {
+        await supabase.from('notificacoes').insert([{
+          reserva_id: null,
+          mensagem: `[ERRO WEBHOOK] Payload inesperado recebido. Confira os logs. Conteúdo: ${JSON.stringify(data).substring(0, 150)}`,
+          lida: false
+        }]);
+      } catch (e) {}
+      
       return NextResponse.json({ success: false, message: 'Pedido não encontrado' }, { status: 400 });
     }
 
