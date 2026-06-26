@@ -84,7 +84,13 @@ export async function POST(request: Request) {
 
           // 4. Disparar o E-mail para Cliente e Administradores
           try {
-            const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+            const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || 'localhost:3000';
+            const protocol = request.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
+            let baseUrl = `${protocol}://${host}`;
+            if (baseUrl.includes('localhost') && process.env.NEXT_PUBLIC_BASE_URL && !process.env.NEXT_PUBLIC_BASE_URL.includes('localhost')) {
+              baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+            }
+
             await fetch(`${baseUrl}/api/send-purchase-email`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },

@@ -4,9 +4,14 @@ export async function POST(request: Request) {
   try {
     const { reserva_id, agenda_id, agenda_title, price, customer } = await request.json();
 
-    const host = request.headers.get('host') || 'localhost:3000';
+    const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || 'localhost:3000';
     const protocol = request.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || `${protocol}://${host}`;
+    let baseUrl = `${protocol}://${host}`;
+    
+    // Se por acaso pegou localhost mas tem uma ENV válida (não-localhost), usa a ENV
+    if (baseUrl.includes('localhost') && process.env.NEXT_PUBLIC_BASE_URL && !process.env.NEXT_PUBLIC_BASE_URL.includes('localhost')) {
+      baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+    }
 
     if (!reserva_id || !price) {
       return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });
