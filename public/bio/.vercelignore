@@ -1,0 +1,8 @@
+imagens/
+node_modules/
+.vercel/
+*.py
+*.js
+!ai_gallery_data.js
+!final_build.js
+# fotos_otimizadas/ (comentado para permitir upload de fotos no Vercel)

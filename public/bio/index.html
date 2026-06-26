@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mais Trilha Menos Estresse</title>
+    <meta name="description" content="Aventuras na natureza, trilhas, cachoeiras e muito mais.">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --orange: #F17B37; --navy: #1D2A3A; --dark: #0F1722; --green: #25D366; }
+        html, body { height: 100%; font-family: "Inter", sans-serif; background: var(--dark); color: #fff; overflow-x: hidden; }
+        .bg-wrap { position: fixed; inset: 0; z-index: 0; }
+        .bg-wrap::before { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse at 20% 20%, rgba(241,123,55,0.15) 0%, transparent 50%), radial-gradient(ellipse at 80% 80%, rgba(29,42,58,0.5) 0%, transparent 50%), linear-gradient(160deg, #0F1722 0%, #151E2B 40%, #0A0F16 100%); animation: bgShift 12s ease-in-out infinite alternate; }
+        @keyframes bgShift { 0% { filter: hue-rotate(0deg) brightness(1); } 100% { filter: hue-rotate(10deg) brightness(1.1); } }
+        .particles { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+        .particle { position: absolute; border-radius: 50%; opacity: 0; animation: float-up linear infinite; }
+        @keyframes float-up { 0% { transform: translateY(100vh) scale(0); opacity: 0; } 10% { opacity: 0.6; } 90% { opacity: 0.2; } 100% { transform: translateY(-10vh) scale(1); opacity: 0; } }
+        .page { position: relative; z-index: 1; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem 1.2rem; }
+        .logo-wrap { position: relative; margin-bottom: 1.4rem; animation: popIn 0.7s cubic-bezier(0.34,1.56,0.64,1) both; }
+        @keyframes popIn { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .logo-ring { width: 110px; height: 110px; border-radius: 50%; padding: 3px; background: linear-gradient(135deg, var(--orange), #FFB347); background-size: 300% 300%; animation: ringRotate 4s linear infinite; }
+        @keyframes ringRotate { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        .logo-inner { width: 100%; height: 100%; border-radius: 50%; background: var(--dark); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .logo-inner img { width: 96%; height: 96%; border-radius: 50%; object-fit: cover; }
+        .online-badge { position: absolute; bottom: 4px; right: 4px; width: 22px; height: 22px; background: var(--green); border-radius: 50%; border: 3px solid #0a0a0a; animation: pulse-dot 2s ease-in-out infinite; }
+        @keyframes pulse-dot { 0%, 100% { box-shadow: 0 0 0 0 rgba(0,200,83,0.6); } 50% { box-shadow: 0 0 0 8px rgba(0,200,83,0); } }
+        .headline { text-align: center; margin-bottom: 0.5rem; animation: slideUp 0.6s ease-out 0.2s both; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .headline h1 { font-family: "Outfit", sans-serif; font-size: 1.65rem; font-weight: 800; line-height: 1.1; background: linear-gradient(90deg, #fff 0%, var(--orange) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .headline .tagline { font-size: 0.85rem; color: rgba(255,255,255,0.55); margin-top: 0.4rem; }
+        .spacer { margin-bottom: 1.5rem; }
+        .links { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 12px; animation: slideUp 0.6s ease-out 0.45s both; }
+        .btn { display: flex; align-items: center; text-decoration: none; border-radius: 16px; overflow: hidden; padding: 14px 16px; position: relative; transition: transform 0.2s ease, box-shadow 0.2s ease; -webkit-tap-highlight-color: transparent; }
+        .btn:active { transform: scale(0.97); }
+        .btn:hover { transform: translateY(-2px); }
+        .btn-album { background: linear-gradient(135deg, #e87a32, #c45b17); box-shadow: 0 8px 30px rgba(241,123,55,0.3); }
+        .btn-album:hover { box-shadow: 0 12px 40px rgba(241,123,55,0.5); }
+        .btn-ig { background: linear-gradient(135deg, #833ab4, #fd1d1d, #fcb045); box-shadow: 0 8px 30px rgba(131,58,180,0.3); }
+        .btn-wa-group { background: linear-gradient(135deg, #075e54, #128c7e); box-shadow: 0 8px 30px rgba(18,140,126,0.25); border: 1px solid rgba(255,255,255,0.08); }
+        .btn-contact { background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.12); backdrop-filter: blur(10px); }
+        .btn-contact:hover { background: rgba(255,255,255,0.1); }
+        .btn-icon { width: 42px; height: 42px; border-radius: 12px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; margin-right: 14px; color: #ffffff; }
+        .btn-text { flex: 1; }
+        .btn-text strong { display: block; font-family: "Outfit", sans-serif; font-size: 1rem; font-weight: 600; color: #fff; }
+        .btn-text small { font-size: 0.75rem; color: rgba(255,255,255,0.6); }
+        .btn-arrow { font-size: 0.8rem; color: rgba(255,255,255,0.4); margin-left: 8px; }
+        .badge-new { position: absolute; top: 10px; right: 12px; font-size: 0.62rem; font-weight: 700; background: #FFD700; color: #000; padding: 2px 7px; border-radius: 20px; letter-spacing: 0.5px; font-family: "Outfit", sans-serif; text-transform: uppercase; }
+        .footer-socials { display: flex; gap: 1rem; margin-top: 1.8rem; animation: slideUp 0.6s ease-out 0.6s both; }
+        .social-pill { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 30px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); color: rgba(255,255,255,0.7); text-decoration: none; font-size: 0.8rem; transition: all 0.2s; }
+        .social-pill:hover { background: rgba(255,255,255,0.14); color: #fff; }
+        footer { margin-top: 1.2rem; font-size: 0.72rem; color: rgba(255,255,255,0.2); text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="bg-wrap"></div>
+    <div class="particles" id="particles"></div>
+    <div class="page">
+        <div class="logo-wrap">
+            <div class="logo-ring">
+                <div class="logo-inner">
+                    <img src="./Gemini_Generated_Image_gzfrdngzfrdngzfr.png" alt="Mais Trilha Menos Estresse">
+                </div>
+            </div>
+            <div class="online-badge"></div>
+        </div>
+        <div class="headline">
+            <h1>Mais Trilha<br>Menos Estresse</h1>
+            <p class="tagline">🌿 Natureza · Aventura · Comunidade</p>
+        </div>
+        <div class="spacer"></div>
+        <div class="links">
+            <a href="./album.html" class="btn btn-album">
+                <span class="badge-new">Novo</span>
+                <div class="btn-icon"><i class="fa-solid fa-images"></i></div>
+                <div class="btn-text"><strong>Álbum de Aventuras</strong><small>Veja todas as fotos e vídeos das trilhas</small></div>
+                <i class="fas fa-chevron-right btn-arrow"></i>
+            </a>
+            <a href="https://www.instagram.com/maistrilhamenosestresse?igsh=bne4m2lpbnbjc3lq" target="_blank" class="btn btn-ig">
+                <div class="btn-icon"><i class="fab fa-instagram"></i></div>
+                <div class="btn-text"><strong>Instagram</strong><small>Siga para aventuras diárias</small></div>
+                <i class="fas fa-chevron-right btn-arrow"></i>
+            </a>
+            <a href="https://chat.whatsapp.com/KNXbACKaKtN8CubdE62jrD?mode=wwc" target="_blank" class="btn btn-wa-group">
+                <div class="btn-icon"><i class="fab fa-whatsapp"></i></div>
+                <div class="btn-text"><strong>Grupo WhatsApp</strong><small>Participe da nossa comunidade</small></div>
+                <i class="fas fa-chevron-right btn-arrow"></i>
+            </a>
+            <a href="https://wa.me/5531998793939" target="_blank" class="btn btn-contact">
+                <div class="btn-icon"><i class="fa-solid fa-comment-dots"></i></div>
+                <div class="btn-text"><strong>Fale com a Nívea</strong><small>Orçamentos e dúvidas diretas</small></div>
+                <i class="fas fa-chevron-right btn-arrow"></i>
+            </a>
+        </div>
+        <div class="footer-socials">
+            <a href="https://www.instagram.com/maistrilhamenosestresse?igsh=bne4m2lpbnbjc3lq" target="_blank" class="social-pill"><i class="fab fa-instagram"></i> Instagram</a>
+            <a href="https://wa.me/5531998793939" target="_blank" class="social-pill"><i class="fab fa-whatsapp"></i> WhatsApp</a>
+        </div>
+        <footer>© 2025 Mais Trilha Menos Estresse</footer>
+    </div>
+    <script>
+        const c = document.getElementById("particles");
+        const cols = ["#F17B37","#FFB347","#fff"];
+        for(let i=0;i<25;i++){const p=document.createElement("div");p.className="particle";const s=Math.random()*6+2;p.style.cssText="width:"+s+"px;height:"+s+"px;left:"+Math.random()*100+"%;background:"+cols[Math.floor(Math.random()*3)]+";animation-duration:"+(Math.random()*15+10)+"s;animation-delay:"+(Math.random()*10)+"s;";c.appendChild(p);}
+    </script>
+</body>
+</html>

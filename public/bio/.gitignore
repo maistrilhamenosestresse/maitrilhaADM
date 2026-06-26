@@ -1,0 +1,18 @@
+# Vercel
+.vercel
+
+# Node modules
+node_modules/
+
+# Local Environment Variables
+.env
+.env.local
+
+# Raw and temporary images (to keep Git repository light)
+imagens/
+imagens_comprimidas/
+thumbnails_para_ia/
+
+# OS files
+Thumbs.db
+.DS_Store
