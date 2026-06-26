@@ -18,14 +18,16 @@ export async function POST(request: Request) {
 
     if (data.type === 'new_registration') {
       const { client } = data;
-      mailOptions = {
+      
+      // Email para Admin
+      const adminMailOptions = {
         from: `Mais Trilha Menos Estresse <${process.env.GMAIL_USER}>`,
         to: "wellingtonf.social@gmail.com, niveamariamagalhaes28@gmail.com",
         subject: `Novo Cadastro Realizado: ${client.full_name}`,
         html: `
           <div style="font-family: sans-serif; max-w: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 10px; overflow: hidden;">
             <div style="background-color: #F17B37; color: white; padding: 20px; text-align: center;">
-              <h2 style="margin: 0;">Novo Ficha Recebida!</h2>
+              <h2 style="margin: 0;">Nova Ficha Recebida!</h2>
               <p style="margin: 5px 0 0 0;">Um aventureiro acabou de preencher os dados.</p>
             </div>
             <div style="padding: 20px;">
@@ -43,13 +45,45 @@ export async function POST(request: Request) {
                 ${client.id ? `<tr><td style="padding: 10px; border-bottom: 1px solid #eee;"><strong>Termo Assinado:</strong></td><td style="padding: 10px; border-bottom: 1px solid #eee;"><a href="https://www.maistrilhasmenosestresse.com/termo/${client.id}" style="color: #113a5d; font-weight: bold;">Acessar e Imprimir PDF</a></td></tr>` : ''}
               </table>
             </div>
-            <div style="background-color: #f8f9fa; padding: 15px; text-align: center; font-size: 12px; color: #666;">
-              Estes dados já estão salvos no seu Painel Administrador.
-            </div>
           </div>
         `
       };
-    } 
+
+      if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) {
+        return NextResponse.json({ success: true, warning: 'E-mail não configurado' });
+      }
+
+      await transporter.sendMail(adminMailOptions);
+
+      // Email para Cliente (cópia do contrato)
+      if (client.email) {
+        const clientMailOptions = {
+          from: `Mais Trilha Menos Estresse <${process.env.GMAIL_USER}>`,
+          to: client.email,
+          subject: `Inscrição Confirmada - ${client.full_name}`,
+          html: `
+            <div style="font-family: sans-serif; max-w: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 10px; overflow: hidden;">
+              <div style="background-color: #F17B37; color: white; padding: 20px; text-align: center;">
+                <h2 style="margin: 0;">Inscrição Realizada com Sucesso! 🥾</h2>
+              </div>
+              <div style="padding: 20px; color: #444; line-height: 1.6;">
+                <p>Olá <strong>${client.full_name}</strong>,</p>
+                <p>Recebemos a sua ficha de inscrição e o termo de responsabilidade devidamente assinado. Estamos muito felizes em ter você na nossa próxima aventura!</p>
+                <p>Abaixo está o link para você acessar e baixar a sua cópia do termo que você acabou de assinar:</p>
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="https://www.maistrilhasmenosestresse.com/termo/${client.id}" style="background-color: #113a5d; color: white; padding: 12px 25px; text-decoration: none; border-radius: 30px; font-weight: bold;">Acessar Meu Contrato</a>
+                </div>
+                <p>Se tiver qualquer dúvida, é só nos chamar no WhatsApp.</p>
+                <p>Abraços,<br/>Equipe Mais Trilha Menos Estresse</p>
+              </div>
+            </div>
+          `
+        };
+        await transporter.sendMail(clientMailOptions);
+      }
+
+      return NextResponse.json({ success: true });
+    }
     else if (data.type === 'birthday_reminder') {
       const { clients } = data;
       
