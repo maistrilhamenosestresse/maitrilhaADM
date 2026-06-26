@@ -1,65 +1,157 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from "framer-motion";
 import { ArrowLeft, Quote, Heart } from "lucide-react";
 import { useRouter } from "next/navigation";
 
-function OrbSwarm({ mouseX, mouseY, hasMoved }: { mouseX: any, mouseY: any, hasMoved: boolean }) {
-  // A mola super elástica para a esfera seguir o mouse com física natural
-  const springX = useSpring(mouseX, { damping: 25, stiffness: 120 });
-  const springY = useSpring(mouseY, { damping: 25, stiffness: 120 });
+function CanvasTrail() {
+  const canvasRef = React.useRef<HTMLCanvasElement>(null);
 
-  // Só mostra a esfera depois que o usuário move o mouse
-  if (!hasMoved) return null;
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
 
-  return (
-    <motion.div
-      className="fixed pointer-events-none z-50 flex items-center justify-center"
-      style={{
-        x: springX,
-        y: springY,
-        width: 0,
-        height: 0,
-        left: 0,
-        top: 0,
-        perspective: '1000px', // Perspectiva 3D
-      }}
-    >
-      <div 
-        style={{ 
-          transformStyle: 'preserve-3d', 
-          animation: 'rotateOrb 14s infinite linear' 
-        }}
-      >
-        {[...Array(150)].map((_, i) => {
-          const z = Math.random() * 360;
-          const y = Math.random() * 360;
-          const delay = i * 0.05; // Delay para não chegarem todas juntas
-          const orbSize = 80; // Tamanho da órbita
-          
-          return (
-            <div
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                width: '3px',
-                height: '3px',
-                backgroundColor: '#F17B37',
-                boxShadow: '0 0 8px 2px #F17B37',
-                opacity: 0,
-                animation: 'orbitParticle 14s infinite',
-                animationDelay: `${delay}s`,
-                '--z': `${z}deg`,
-                '--y': `${y}deg`,
-                '--orb-size': `${orbSize}px`,
-              } as React.CSSProperties}
-            />
-          );
-        })}
-      </div>
-    </motion.div>
-  );
+    let width = window.innerWidth;
+    let height = window.innerHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    const handleResize = () => {
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width;
+      canvas.height = height;
+    };
+    window.addEventListener('resize', handleResize);
+
+    const mouse = { x: width / 2, y: height / 2 };
+    const lastMouse = { x: width / 2, y: height / 2 };
+    let isMoving = false;
+    let moveTimeout: any;
+
+    const handleMouseMove = (e: MouseEvent | TouchEvent) => {
+      const clientX = 'touches' in e ? e.touches[0].clientX : e.clientX;
+      const clientY = 'touches' in e ? e.touches[0].clientY : e.clientY;
+      lastMouse.x = mouse.x;
+      lastMouse.y = mouse.y;
+      mouse.x = clientX;
+      mouse.y = clientY;
+      isMoving = true;
+      clearTimeout(moveTimeout);
+      moveTimeout = setTimeout(() => { isMoving = false; }, 100);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('touchmove', handleMouseMove);
+
+    class Particle {
+      x: number; y: number; vx: number; vy: number;
+      life: number; maxLife: number; size: number; color: string;
+      
+      constructor(x: number, y: number, isWave: boolean, wavePhase: number) {
+        this.x = x; this.y = y;
+        this.maxLife = isWave ? Math.random() * 40 + 20 : Math.random() * 20 + 10;
+        this.life = this.maxLife;
+        this.size = Math.random() * 3 + 1.5;
+        this.color = Math.random() > 0.25 ? '#F17B37' : '#FFFFFF';
+        
+        if (isWave) {
+          // Forma de onda: Cria um rastro senoidal natural ao mover
+          const dx = mouse.x - lastMouse.x;
+          const dy = mouse.y - lastMouse.y;
+          const angle = Math.atan2(dy, dx) + Math.PI / 2; // Perpendicular ao movimento
+          const amplitude = Math.random() * 3 + 1; // Largura da onda
+          this.vx = Math.cos(angle) * Math.sin(wavePhase) * amplitude + (dx * 0.05);
+          this.vy = Math.sin(angle) * Math.sin(wavePhase) * amplitude + (dy * 0.05);
+        } else {
+          // Dispersão: Explode suavemente em direções aleatórias quando para
+          const angle = Math.random() * Math.PI * 2;
+          const speed = Math.random() * 4 + 1;
+          this.vx = Math.cos(angle) * speed;
+          this.vy = Math.sin(angle) * speed;
+        }
+      }
+
+      update() {
+        this.x += this.vx;
+        this.y += this.vy;
+        this.life--;
+        // Fricção natural do ar
+        this.vx *= 0.92;
+        this.vy *= 0.92;
+      }
+
+      draw(ctx: CanvasRenderingContext2D) {
+        const opacity = Math.max(0, this.life / this.maxLife);
+        ctx.globalAlpha = opacity;
+        ctx.fillStyle = this.color;
+        ctx.shadowBlur = 12;
+        ctx.shadowColor = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
+        ctx.shadowBlur = 0;
+      }
+    }
+
+    const particles: Particle[] = [];
+    let wavePhase = 0;
+    let wasMoving = false;
+    let animationFrame: number;
+
+    const animate = () => {
+      ctx.clearRect(0, 0, width, height);
+
+      const dx = mouse.x - lastMouse.x;
+      const dy = mouse.y - lastMouse.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+
+      if (isMoving && dist > 1) {
+        wavePhase += 0.4;
+        // Joga 3 a 4 partículas por frame formando a onda e o rastro
+        for(let i = 0; i < 4; i++) {
+          particles.push(new Particle(mouse.x, mouse.y, true, wavePhase + (i * 0.5)));
+        }
+        wasMoving = true;
+      } else if (wasMoving) {
+        // Mouse parou: Dispersa as partículas!
+        for(let i = 0; i < 40; i++) {
+          particles.push(new Particle(mouse.x, mouse.y, false, 0));
+        }
+        wasMoving = false;
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.update();
+        p.draw(ctx);
+        if (p.life <= 0) {
+          particles.splice(i, 1);
+        }
+      }
+
+      // Amortece a diferença do lastMouse
+      lastMouse.x += (mouse.x - lastMouse.x) * 0.15;
+      lastMouse.y += (mouse.y - lastMouse.y) * 0.15;
+
+      animationFrame = requestAnimationFrame(animate);
+    };
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleMouseMove);
+      cancelAnimationFrame(animationFrame);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="fixed inset-0 z-50 pointer-events-none" />;
 }
 
 export default function OlharesPage() {
@@ -74,31 +166,6 @@ export default function OlharesPage() {
   // Efeito Parallax super suave para os textos e partículas
   const yHero = useTransform(scrollYProgress, [0, 1], [0, 300]);
   const opacityHero = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
-
-  // Rastreamento global do mouse/touch para o Enxame
-  const mouseX = useMotionValue(typeof window !== "undefined" ? window.innerWidth / 2 : 0);
-  const mouseY = useMotionValue(typeof window !== "undefined" ? window.innerHeight / 2 : 0);
-  const [hasMoved, setHasMoved] = useState(false);
-
-  useEffect(() => {
-    const handleMove = (e: MouseEvent | TouchEvent) => {
-      setHasMoved(true);
-      if ('touches' in e) {
-        mouseX.set(e.touches[0].clientX);
-        mouseY.set(e.touches[0].clientY);
-      } else {
-        mouseX.set(e.clientX);
-        mouseY.set(e.clientY);
-      }
-    };
-    
-    window.addEventListener("mousemove", handleMove);
-    window.addEventListener("touchmove", handleMove);
-    return () => {
-      window.removeEventListener("mousemove", handleMove);
-      window.removeEventListener("touchmove", handleMove);
-    };
-  }, [mouseX, mouseY]);
 
   const olhares = [
     {
@@ -122,8 +189,8 @@ export default function OlharesPage() {
   return (
     <div className="bg-[#05080c] text-white min-h-screen overflow-x-hidden font-sans selection:bg-[#F17B37] selection:text-white">
       
-      {/* O ENXAME INTERATIVO: A Esfera 3D de Partículas de Fogo */}
-      {isClient && <OrbSwarm mouseX={mouseX} mouseY={mouseY} hasMoved={hasMoved} />}
+      {/* O RASTRO DE ONDA E DISPERSÃO EM CANVAS */}
+      {isClient && <CanvasTrail />}
 
       {/* PARTÍCULAS DE POEIRA CINEMATOGRÁFICAS (FAGULHAS E NÉVOA DE FUNDO) */}
       {isClient && (
