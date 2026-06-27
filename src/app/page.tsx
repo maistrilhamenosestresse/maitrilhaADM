@@ -398,7 +398,7 @@ export default function LandingPage() {
               <img src="/FotosEvideos/Grupo/IMG_9430 - Copia.JPG" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Mais" />
             </motion.div>
             <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
-              <img src="/FotosEvideos/Grupo/IMG_9317 - Copia.JPG" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Mais" />
+              <img src="/FotosEvideos/Grupo/IMG_5987.webp" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Mais" />
             </motion.div>
             <motion.div className="relative rounded-2xl overflow-hidden shadow-xl group ring-1 ring-white/10 break-inside-avoid" whileHover={{ scale: 0.98 }} transition={{ duration: 0.4 }}>
               <img src="/FotosEvideos/Grupo/IMG_6178.webp" className="w-full h-auto object-cover group-hover:scale-105 transition-transform duration-1000" alt="Grupo Mais" />
