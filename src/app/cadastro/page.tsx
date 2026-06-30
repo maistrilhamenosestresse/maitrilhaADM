@@ -21,6 +21,12 @@ function CadastroContent() {
   const agendaId = searchParams.get('agenda_id');
   const { items, clearCart } = useCartStore();
 
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const primaryAgendas = items.map(i => i.agendaId);
   const extraSpotsData: { agendaId: string, title: string, full_name: string, cpf: string }[] = [];
   items.forEach(item => {
@@ -74,6 +80,8 @@ function CadastroContent() {
       setPhotoPreview(URL.createObjectURL(file));
     }
   };
+
+  if (!mounted) return null;
 
   const handleNext = () => setStep(prev => prev + 1);
   const handlePrev = () => setStep(prev => prev - 1);

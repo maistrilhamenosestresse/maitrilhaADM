@@ -89,10 +89,8 @@ export default function AgendaDetailsPage() {
   const eventDate = eventDateObj.toLocaleDateString('pt-BR');
   
   const isSoldOut = paidCount >= (agenda.max_capacity || 15);
-  const { addItem } = useCartStore();
-
   const handleComprar = () => {
-    addItem({
+    useCartStore.getState().addItem({
       agendaId: agenda.id,
       title: agenda.title,
       price: agenda.price,
