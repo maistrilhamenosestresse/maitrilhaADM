@@ -28,17 +28,10 @@ function CadastroContent() {
   }, []);
 
   const primaryAgendas = items.map(i => i.agendaId);
-  const extraSpotsData: { agendaId: string, title: string, full_name: string, cpf: string }[] = [];
-  items.forEach(item => {
-    for(let i=1; i < item.quantity; i++) {
-      extraSpotsData.push({ agendaId: item.agendaId, title: item.title, full_name: "", cpf: "" });
-    }
-  });
-  const [extraPassengers, setExtraPassengers] = useState(extraSpotsData);
-  const hasExtraPassengers = extraPassengers.length > 0;
+  const hasExtraPassengers = false;
   
   // Update total steps
-  const totalSteps = hasExtraPassengers ? 5 : 4;
+  const totalSteps = 4;
 
   const initialEmail = searchParams.get('email') || "";
   const [agenda, setAgenda] = useState<any>(null);
@@ -221,18 +214,24 @@ function CadastroContent() {
              allReservationsToCreate.push({ client_id: savedClient.id, agenda_id: aId });
           });
 
-          // Extra Passengers spots
-          for (const ep of extraPassengers) {
-             let epId;
-             const { data: existingEp } = await supabase.from('clients').select('*').eq('cpf', ep.cpf).single();
-             if (existingEp) {
-                const { data: updatedEp } = await supabase.from('clients').update({ full_name: ep.full_name }).eq('id', existingEp.id).select();
-                epId = updatedEp![0].id;
-             } else {
-                const { data: insertedEp } = await supabase.from('clients').insert([{ full_name: ep.full_name, cpf: ep.cpf }]).select();
-                epId = insertedEp![0].id;
+          // Extra Passengers spots from Cart Store
+          for (const item of items) {
+             if (item.dependents && item.dependents.length > 0) {
+               for (const dep of item.dependents) {
+                 if (dep.name && dep.cpf) {
+                   let epId;
+                   const { data: existingEp } = await supabase.from('clients').select('*').eq('cpf', dep.cpf).single();
+                   if (existingEp) {
+                      const { data: updatedEp } = await supabase.from('clients').update({ full_name: dep.name }).eq('id', existingEp.id).select();
+                      epId = updatedEp![0].id;
+                   } else {
+                      const { data: insertedEp } = await supabase.from('clients').insert([{ full_name: dep.name, cpf: dep.cpf }]).select();
+                      epId = insertedEp![0].id;
+                   }
+                   allReservationsToCreate.push({ client_id: epId, agenda_id: item.agendaId });
+                 }
+               }
              }
-             allReservationsToCreate.push({ client_id: epId, agenda_id: ep.agendaId });
           }
 
           const resReserva = await fetch('/api/create-reserva', {
@@ -606,77 +605,6 @@ function CadastroContent() {
             )}
 
             
-            {step === 4 && hasExtraPassengers && (
-              <motion.div 
-                key="step4-extra"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-5"
-              >
-                <div className="text-center mb-6">
-                  <h2 className="text-xl font-bold flex items-center justify-center gap-2"><Users className="text-[#F17B37]" /> Acompanhantes</h2>
-                  <p className="text-sm text-[#F17B37] mt-2 font-bold">Aviso Importante</p>
-                  <p className="text-gray-400 text-xs mt-1">Por gentileza, informe o restante das pessoas da viagem para entrarem no site depois e finalizarem o cadastro.</p>
-                </div>
-
-                <div className="space-y-6 max-h-[50vh] overflow-y-auto custom-scrollbar pr-2">
-                  {extraPassengers.map((ep, idx) => (
-                    <div key={idx} className="bg-white/5 p-4 rounded-xl border border-white/10">
-                      <p className="text-xs font-bold text-[#F17B37] uppercase mb-3">Vaga Extra {idx + 1} - {ep.title}</p>
-                      
-                      <div className="space-y-4">
-                        <div>
-                          <label className="block text-xs font-bold text-gray-300 mb-1">Nome Completo</label>
-                          <input 
-                            type="text" 
-                            required
-                            value={ep.full_name}
-                            onChange={e => {
-                              const newArr = [...extraPassengers];
-                              newArr[idx].full_name = e.target.value;
-                              setExtraPassengers(newArr);
-                            }}
-                            className="w-full p-3 bg-black/20 border border-white/10 rounded-xl focus:ring-2 focus:ring-[#F17B37] outline-none transition-all placeholder-gray-600 text-sm" 
-                            placeholder="Nome do acompanhante"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-gray-300 mb-1">CPF</label>
-                          <input 
-                            type="text" 
-                            required
-                            value={ep.cpf}
-                            onChange={e => {
-                              const newArr = [...extraPassengers];
-                              newArr[idx].cpf = formatCPF(e.target.value);
-                              setExtraPassengers(newArr);
-                            }}
-                            className="w-full p-3 bg-black/20 border border-white/10 rounded-xl focus:ring-2 focus:ring-[#F17B37] outline-none transition-all placeholder-gray-600 text-sm" 
-                            placeholder="000.000.000-00"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="flex gap-3 mt-6">
-                  <button type="button" onClick={handlePrev} className="flex-none px-6 bg-white/5 text-gray-300 rounded-2xl font-bold hover:bg-white/10 transition">
-                    Voltar
-                  </button>
-                  <button 
-                    type="button" 
-                    onClick={handleNext}
-                    disabled={extraPassengers.some(ep => !ep.full_name || ep.cpf.length < 14)}
-                    className="flex-1 bg-white/10 text-white p-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-white/20 transition disabled:opacity-50"
-                  >
-                    Continuar <ChevronRight className="h-5 w-5" />
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
             {step === (hasExtraPassengers ? 5 : 4) && (
               <motion.div 
                 key="step4"

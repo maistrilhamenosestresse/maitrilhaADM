@@ -95,7 +95,8 @@ export default function AgendaDetailsPage() {
       title: agenda.title,
       price: agenda.price,
       date: eventDate,
-      quantity: 1
+      quantity: 1,
+      dependents: []
     });
     router.push('/carrinho');
   };

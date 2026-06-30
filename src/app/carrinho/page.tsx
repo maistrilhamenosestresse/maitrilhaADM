@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useCartStore } from "@/store/cartStore";
 import { useRouter } from "next/navigation";
-import { ShoppingCart, Trash2, ChevronLeft, ChevronRight, CheckCircle2, ShieldCheck, MapPin } from "lucide-react";
+import { ShoppingCart, Trash2, ChevronLeft, ChevronRight, ShieldCheck, MapPin, Users } from "lucide-react";
 
 export default function CarrinhoPage() {
   const router = useRouter();
-  const { items, updateQuantity, removeItem, getTotalPrice, getTotalQuantity } = useCartStore();
+  const { items, updateQuantity, removeItem, updateDependent, getTotalPrice, getTotalQuantity } = useCartStore();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -17,9 +17,22 @@ export default function CarrinhoPage() {
 
   if (!mounted) return null;
 
+  const formatCPF = (v: string) => {
+    v = v.replace(/\D/g, "");
+    if (v.length <= 11) {
+      v = v.replace(/(\d{3})(\d)/, "$1.$2");
+      v = v.replace(/(\d{3})(\d)/, "$1.$2");
+      v = v.replace(/(\d{3})(\d{1,2})$/, "$1-$2");
+    }
+    return v;
+  };
+
+  const hasMissingDependents = items.some(item => 
+    item.quantity > 1 && item.dependents?.some(dep => !dep.name || dep.cpf.length < 14)
+  );
+
   return (
     <div className="min-h-screen bg-[#0F1722] text-white font-sans pb-32">
-      {/* Background Decorativo */}
       <div className="fixed top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[#F17B37] rounded-full blur-[150px] opacity-5 pointer-events-none" />
       
       <header className="px-6 pt-12 pb-8 relative z-10">
@@ -32,7 +45,7 @@ export default function CarrinhoPage() {
         <p className="text-gray-400 mt-2">Você tem {getTotalQuantity()} itens no carrinho.</p>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6">
+      <div className="max-w-4xl mx-auto px-6 relative z-10">
         {items.length === 0 ? (
           <div className="bg-[#1a2332] border border-white/10 rounded-3xl p-12 text-center shadow-2xl">
             <ShoppingCart className="h-16 w-16 text-gray-600 mx-auto mb-4" />
@@ -46,51 +59,92 @@ export default function CarrinhoPage() {
             </button>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {items.map((item) => (
               <motion.div 
                 key={item.agendaId}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-[#1a2332] border border-white/10 rounded-2xl p-4 md:p-6 shadow-xl flex flex-col md:flex-row gap-4 items-start md:items-center justify-between"
+                className="bg-[#1a2332] border border-white/10 rounded-2xl p-4 md:p-6 shadow-xl flex flex-col gap-6"
               >
-                <div className="flex-1">
-                  <h3 className="font-bold text-lg md:text-xl text-[#F17B37] mb-1">{item.title}</h3>
-                  <p className="text-sm text-gray-400 flex items-center gap-1">
-                    <MapPin className="h-3 w-3" /> {item.date}
-                  </p>
-                </div>
-                
-                <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
-                  <div className="flex items-center gap-3 bg-white/5 p-1 rounded-xl border border-white/10">
-                    <button 
-                      onClick={() => updateQuantity(item.agendaId, Math.max(1, item.quantity - 1))}
-                      className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
-                    >
-                      -
-                    </button>
-                    <span className="font-bold w-6 text-center">{item.quantity}</span>
-                    <button 
-                      onClick={() => updateQuantity(item.agendaId, item.quantity + 1)}
-                      className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
-                    >
-                      +
-                    </button>
+                <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg md:text-xl text-[#F17B37] mb-1">{item.title}</h3>
+                    <p className="text-sm text-gray-400 flex items-center gap-1">
+                      <MapPin className="h-3 w-3" /> {item.date}
+                    </p>
                   </div>
                   
-                  <div className="text-right">
-                    <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Subtotal</p>
-                    <p className="font-bold text-[#25D366] text-lg">R$ {(item.price * item.quantity).toFixed(2)}</p>
+                  <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
+                    <div className="flex items-center gap-3 bg-white/5 p-1 rounded-xl border border-white/10">
+                      <button 
+                        onClick={() => updateQuantity(item.agendaId, Math.max(1, item.quantity - 1))}
+                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+                      >
+                        -
+                      </button>
+                      <span className="font-bold w-6 text-center">{item.quantity}</span>
+                      <button 
+                        onClick={() => updateQuantity(item.agendaId, item.quantity + 1)}
+                        className="p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition"
+                      >
+                        +
+                      </button>
+                    </div>
+                    
+                    <div className="text-right">
+                      <p className="text-xs text-gray-500 uppercase tracking-wider font-bold mb-1">Subtotal</p>
+                      <p className="font-bold text-[#25D366] text-lg">R$ {(item.price * item.quantity).toFixed(2)}</p>
+                    </div>
+                    
+                    <button 
+                      onClick={() => removeItem(item.agendaId)}
+                      className="p-3 text-red-400 hover:bg-red-500/10 rounded-xl transition"
+                      title="Remover Item"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
                   </div>
-                  
-                  <button 
-                    onClick={() => removeItem(item.agendaId)}
-                    className="p-3 text-red-400 hover:bg-red-500/10 rounded-xl transition"
-                    title="Remover Item"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
                 </div>
+
+                {item.quantity > 1 && (
+                  <div className="bg-black/20 border border-white/5 rounded-xl p-4 space-y-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Users className="text-[#F17B37] h-5 w-5" />
+                      <h4 className="font-bold text-sm text-gray-300">Dados dos Acompanhantes</h4>
+                    </div>
+                    <p className="text-xs text-gray-400">1 vaga é sua (Titular). Preencha os dados das {item.quantity - 1} vagas extras para gerar as reservas.</p>
+                    
+                    {item.dependents?.map((dep, idx) => (
+                      <div key={idx} className="flex flex-col md:flex-row gap-4 pt-2 border-t border-white/5 first:border-0 first:pt-0">
+                        <div className="flex-1">
+                          <label className="block text-xs font-bold text-gray-400 mb-1">Nome Completo (Acompanhante {idx + 1})</label>
+                          <input 
+                            type="text" 
+                            value={dep.name}
+                            onChange={(e) => updateDependent(item.agendaId, idx, 'name', e.target.value)}
+                            placeholder="Nome completo do acompanhante"
+                            className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-[#F17B37] outline-none text-sm transition"
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <label className="block text-xs font-bold text-gray-400 mb-1">CPF (Acompanhante {idx + 1})</label>
+                          <input 
+                            type="text" 
+                            value={dep.cpf}
+                            maxLength={14}
+                            onChange={(e) => updateDependent(item.agendaId, idx, 'cpf', formatCPF(e.target.value))}
+                            placeholder="000.000.000-00"
+                            className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-[#F17B37] outline-none text-sm transition"
+                          />
+                        </div>
+                      </div>
+                    ))}
+                    <div className="mt-2 text-xs text-[#F17B37] font-medium bg-[#F17B37]/10 p-3 rounded-lg border border-[#F17B37]/20">
+                      Importante: Peça para seus acompanhantes entrarem no site depois para finalizar o próprio cadastro e assinar o contrato.
+                    </div>
+                  </div>
+                )}
               </motion.div>
             ))}
 
@@ -108,13 +162,19 @@ export default function CarrinhoPage() {
                   Continuar Comprando
                 </button>
                 <button 
-                  onClick={() => router.push('/cadastro')}
-                  className="flex-[2] bg-gradient-to-r from-[#F17B37] to-[#f9a03f] text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:scale-[1.02] shadow-lg shadow-[#F17B37]/20 transition"
+                  onClick={() => router.push('/checkout')}
+                  disabled={hasMissingDependents}
+                  className="flex-[2] bg-gradient-to-r from-[#F17B37] to-[#f9a03f] text-white py-4 rounded-xl font-bold flex items-center justify-center gap-2 hover:scale-[1.02] shadow-lg shadow-[#F17B37]/20 transition disabled:opacity-50 disabled:grayscale disabled:cursor-not-allowed"
                 >
                   <ShieldCheck className="h-5 w-5" />
                   Finalizar Compra Segura
                 </button>
               </div>
+              {hasMissingDependents && (
+                <p className="text-red-400 text-xs text-center mt-3 font-bold">
+                  Preencha o Nome e CPF de todos os acompanhantes para continuar.
+                </p>
+              )}
             </div>
           </div>
         )}
