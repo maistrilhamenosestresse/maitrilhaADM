@@ -151,6 +151,9 @@ export default function AdminPage() {
         if (error) throw error;
         setAgendas(data || []);
       
+      const { data: resSettings } = await supabase.from('settings').select('*').single();
+      if (resSettings) setIsMaintenance(resSettings.maintenance_mode);
+
       const { data: statsData } = await supabase.from('global_stats').select('total_views').eq('id', 1).single();
       if (statsData) setGlobalViews(statsData.total_views || 0);
 
@@ -165,6 +168,9 @@ export default function AdminPage() {
 
   useEffect(() => {
     fetchAgendasAndCleanup();
+  }, [mainTab]);
+
+  useEffect(() => {
     
     // --- SEGURANÇA: LOG DE ACESSO DO DESENVOLVEDOR ---
     async function checkDevAccess() {
