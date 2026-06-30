@@ -8,25 +8,31 @@ const supabaseAdmin = createClient(
 
 export async function POST(request: Request) {
   try {
-    const { client_id, agenda_id, status_pagamento = 'pendente', valor_pago = 0 } = await request.json();
+    const body = await request.json();
+    
+    // Suporta tanto o formato antigo { client_id, agenda_id } quanto o novo { reservas: [...] }
+    const reservasToInsert = body.reservas || [{
+      client_id: body.client_id,
+      agenda_id: body.agenda_id,
+      status_pagamento: body.status_pagamento || 'pendente',
+      valor_pago: body.valor_pago || 0
+    }];
 
-    if (!client_id || !agenda_id) {
-      return NextResponse.json({ error: 'Dados obrigatórios ausentes' }, { status: 400 });
+    if (reservasToInsert.length === 0) {
+      return NextResponse.json({ error: 'Nenhuma reserva enviada' }, { status: 400 });
     }
 
-    const { data: reservaData, error: reservaError } = await supabaseAdmin.from('reservas').insert([{
-      client_id,
-      agenda_id,
-      status_pagamento,
-      valor_pago
-    }]).select();
+    const { data: reservaData, error: reservaError } = await supabaseAdmin
+      .from('reservas')
+      .insert(reservasToInsert)
+      .select();
 
     if (reservaError) {
       console.error("Erro interno ao inserir reserva:", reservaError);
       return NextResponse.json({ error: reservaError.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, reserva: reservaData[0] });
+    return NextResponse.json({ success: true, reservas: reservaData });
 
   } catch (error: any) {
     console.error("Erro em /api/create-reserva:", error);

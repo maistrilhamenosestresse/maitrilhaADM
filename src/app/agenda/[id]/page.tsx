@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Calendar, MapPin, DollarSign, CheckCircle2, ChevronLeft, ChevronRight, Video as VideoIcon, Send, FileText, Image as ImageIcon, Info, X, Clock, Navigation, Mountain } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { useCartStore } from "@/store/cartStore";
 
 export default function AgendaDetailsPage() {
   const params = useParams();
@@ -88,7 +89,18 @@ export default function AgendaDetailsPage() {
   const eventDate = eventDateObj.toLocaleDateString('pt-BR');
   
   const isSoldOut = paidCount >= (agenda.max_capacity || 15);
-  const checkoutUrl = `/checkout?agenda_id=${agenda.id}`;
+  const { addItem } = useCartStore();
+
+  const handleComprar = () => {
+    addItem({
+      agendaId: agenda.id,
+      title: agenda.title,
+      price: agenda.price,
+      date: eventDate,
+      quantity: 1
+    });
+    router.push('/carrinho');
+  };
 
   const handleShare = async () => {
     const whatsappText = `🌿 *Trilha: ${agenda.title}*\n📅 Data: ${eventDate}\n💰 Valor: R$ ${agenda.price}\n\n👇 *Confira o Flyer oficial:*\n${agenda.flyer_url || agenda.images?.[0] || window.location.href}\n\n✨ *Garanta sua vaga e veja o roteiro completo aqui:*\n${window.location.href}`;
@@ -369,13 +381,13 @@ export default function AgendaDetailsPage() {
                 Vagas Esgotadas
               </button>
             ) : (
-              <a 
-                href={checkoutUrl}
+              <button 
+                onClick={handleComprar}
                 className="flex-1 flex items-center justify-center gap-2 bg-[#25D366] text-white p-4 rounded-2xl font-bold text-lg shadow-lg hover:bg-[#20b858] hover:scale-[1.02] transition-all"
               >
                 <CheckCircle2 className="h-6 w-6" />
-                Garantir Vaga
-              </a>
+                Comprar
+              </button>
             )}
 
             <a 

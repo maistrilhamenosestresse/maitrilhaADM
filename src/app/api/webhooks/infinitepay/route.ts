@@ -2,8 +2,6 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { sendPurchaseEmail } from '@/lib/email';
 
-// Usamos o Service Role Key aqui para by-passar o RLS de forma segura, 
-// pois este código roda no servidor e não no cliente. Se não existir na Vercel, cai para a ANON_KEY.
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
@@ -13,16 +11,11 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
 
-    // Tentar salvar o webhook bruto para debug visual no painel
-    try {
-      await supabase.from('notificacoes').insert([{
-        reserva_id: null,
-        mensagem: `[LOG WEBHOOK RECEBIDO] ${JSON.stringify(data).substring(0, 300)}`,
-        lida: false
-      }]);
-    } catch (e) {}
+    // REMOVIDO: Log bruto do webhook (evita array e logs feios no painel admin)
+    // try {
+    //   await supabase.from('notificacoes').insert([{ ... }]);
+    // } catch (e) {}
 
-    // Dados enviados pelo Webhook da InfinitePay (podem vir dentro de payload, data, ou direto na raiz)
     const payloadInfo = data.payload || data.data || data;
 
     const { 
@@ -34,87 +27,77 @@ export async function POST(request: Request) {
       order_nsu 
     } = payloadInfo;
 
-    // Se o evento não for de pagamento aprovado, podemos ignorar (opcional)
     if (data.event && data.event !== 'payment_approved') {
       console.log('Ignorando evento:', data.event);
       return NextResponse.json({ success: true, message: 'Evento ignorado' }, { status: 200 });
     }
 
-    // A InfinitePay pode enviar o metadata com o ID da reserva
+    // A InfinitePay envia o array de reserva_ids via metadata
+    const metadataReservas = data.metadata?.reservas || payloadInfo.metadata?.reservas;
+    
     const fallback_nsu = data.metadata?.order_nsu || data.metadata?.reserva_id || payloadInfo.metadata?.order_nsu || payloadInfo.metadata?.reserva_id;
     const final_order_nsu = order_nsu || fallback_nsu;
 
-    if (!final_order_nsu) {
-      console.error('Webhook Inválido. Payload recebido:', JSON.stringify(data));
-      return NextResponse.json({ success: false, message: 'Pedido não encontrado no Payload' }, { status: 400 });
+    let reserva_ids = [];
+    if (Array.isArray(metadataReservas) && metadataReservas.length > 0) {
+      reserva_ids = metadataReservas;
+    } else if (final_order_nsu && !final_order_nsu.startsWith('PEDIDO-')) {
+      reserva_ids = [final_order_nsu];
     }
 
-    // O final_order_nsu será o ID da reserva
-    const reserva_id = final_order_nsu;
+    if (reserva_ids.length === 0) {
+      console.error('Webhook Inválido. Pedido ou reservas não encontrados no Payload.');
+      return NextResponse.json({ success: false, message: 'Pedido/Reservas não encontrados' }, { status: 400 });
+    }
 
-    if (reserva_id) {
-      // 1. Atualizar a Tabela de Reservas no Supabase marcando como Pago
-      const { error } = await supabase
-        .from('reservas')
-        .update({ 
-          status_pagamento: 'pago',
-          valor_pago: paid_amount / 100, // Converte de volta de centavos para Reais
-          metodo_pagamento: capture_method || 'infinitepay',
-        })
-        .eq('id', reserva_id);
+    // 1. Atualizar a Tabela de Reservas no Supabase marcando todas como Pagas
+    const { error } = await supabase
+      .from('reservas')
+      .update({ 
+        status_pagamento: 'pago',
+        valor_pago: (paid_amount / 100) / reserva_ids.length, // Rateio basico do valor pago
+        metodo_pagamento: capture_method || 'infinitepay',
+      })
+      .in('id', reserva_ids);
 
-      if (error) {
-        console.error("Erro ao atualizar reserva:", error);
-        // Mesmo que falhe o db, vamos retornar 200 pra InfinitePay não ficar tentando de novo infinitamente
-      } else {
-        // 2. Buscar Dados para Notificação e Email
-        const { data: reservaData } = await supabase
+    if (error) {
+      console.error("Erro ao atualizar reservas:", error);
+    } else {
+      // 2. Buscar Dados para Notificação e Email (pegando a primeira reserva como referência)
+      try {
+        const { data: resData } = await supabase
           .from('reservas')
           .select('*, clients(*), agendas(*)')
-          .eq('id', reserva_id)
+          .eq('id', reserva_ids[0])
           .single();
 
-        if (reservaData && reservaData.clients && reservaData.agendas) {
-          const client = reservaData.clients;
-          const agenda = reservaData.agendas;
+        if (resData && resData.clients && resData.agendas) {
+          
+          let mensagemNotificacao = `🤑 COMPRA APROVADA: ${resData.clients.full_name} comprou ${reserva_ids.length} vaga(s) para ${resData.agendas.title} no valor total de R$ ${(paid_amount / 100).toFixed(2)}`;
 
-          // 3. Inserir Notificação para o Admin
-          await supabase.from('notificacoes').insert([
-            {
-              reserva_id: reserva_id,
-              mensagem: `Nova venda! ${client.full_name} comprou a trilha ${agenda.title}.`,
-              lida: false
-            }
-          ]);
+          // Inserir Notificação Bonita
+          await supabase.from('notificacoes').insert([{
+            reserva_id: reserva_ids[0],
+            mensagem: mensagemNotificacao,
+            lida: false
+          }]);
 
-          // 4. Disparar o E-mail para Cliente e Administradores (CHAMADA DIRETA para evitar timeout na Vercel)
+          // Disparar Email
           try {
-            await sendPurchaseEmail(client, agenda);
-            console.log(`[SUCESSO] Email enviado para compra da Reserva ID: ${reserva_id}`);
+            await sendPurchaseEmail(resData.clients, resData.agendas);
           } catch (emailErr) {
-            console.error("Erro ao enviar email de compra:", emailErr);
-            // Salvar aviso que o email falhou
-            try {
-              await supabase.from('notificacoes').insert([
-                {
-                  reserva_id: reserva_id,
-                  mensagem: `[ERRO] Venda APROVADA, mas o E-MAIL falhou para ${client.full_name}. Verifique a senha do Gmail.`,
-                  lida: false
-                }
-              ]);
-            } catch (e) {}
+             console.error("Erro ao enviar email de compra aprovada", emailErr);
           }
         }
-
-        console.log(`[SUCESSO] Pagamento confirmado! Reserva ID: ${reserva_id}`);
+      } catch (notifErr) {
+        console.error("Erro ao gerar notificação do webhook", notifErr);
       }
     }
 
-    // A InfinitePay exige um 200 OK extremamente rápido com este JSON
-    return NextResponse.json({ success: true, message: null }, { status: 200 });
+    return NextResponse.json({ success: true }, { status: 200 });
 
-  } catch (error) {
-    console.error("Erro no processamento do Webhook:", error);
-    return NextResponse.json({ success: false, message: "Erro interno" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Erro geral no webhook da InfinitePay:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }

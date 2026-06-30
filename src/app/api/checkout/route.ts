@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { reserva_id, agenda_id, agenda_title, price, customer } = await request.json();
+    const { reserva_id, reserva_ids, agenda_id, agenda_title, price, customer } = await request.json();
 
     const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || 'localhost:3000';
     const protocol = request.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
@@ -13,24 +13,26 @@ export async function POST(request: Request) {
       baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
     }
 
-    if (!reserva_id || !price) {
+    const ids = reserva_ids || (reserva_id ? [reserva_id] : []);
+
+    if (ids.length === 0 || !price) {
       return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });
     }
 
     // A API do InfinitePay espera o handle sem o $
     const infiniteTag = "nivea-maria-7en";
     
-    // O order_nsu será exatamente o ID da reserva
-    const order_nsu = reserva_id;
+    // Para múltiplos IDs, geramos um order_nsu customizado e armazenamos os reais no metadata
+    const order_nsu = ids.length === 1 ? ids[0] : `PEDIDO-${Date.now()}`;
 
     // Montando a requisição para a InfinitePay
     const payload = {
       handle: infiniteTag,
-      // Usaremos a URL base extraída da própria requisição (dinâmica)
-      redirect_url: `${baseUrl}/sucesso?agenda_id=${agenda_id || reserva_id}`,
+      redirect_url: `${baseUrl}/sucesso?agenda_id=${agenda_id || ids[0]}`,
       webhook_url: `${baseUrl}/api/webhooks/infinitepay`,
       order_nsu: order_nsu,
       customer: customer,
+      metadata: { reservas: ids },
       items: [
         {
           quantity: 1,
@@ -44,26 +46,29 @@ export async function POST(request: Request) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
-        // A API de links públicos do Checkout da InfinitePay aparentemente não precisa de header Bearer para criação de links básicos segundo a documentação fornecida, 
-        // mas se a documentação oficial da conta exigir a API Key, ela entraria aqui:
-        // 'Authorization': `Bearer ${process.env.INFINITEPAY_API_KEY}`
       },
       body: JSON.stringify(payload)
     });
 
+    const result = await response.json();
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Erro na API da InfinitePay:", errorText);
-      return NextResponse.json({ error: 'Falha ao gerar link de pagamento' }, { status: response.status });
+      console.error("Erro da InfinitePay:", result);
+      return NextResponse.json({ error: 'Falha ao criar link de pagamento', details: result }, { status: response.status });
     }
 
-    const data = await response.json();
-    
-    // Retorna a URL segura de checkout da InfinitePay
-    return NextResponse.json({ url: data.url, order_nsu: order_nsu });
+    // O link de pagamento vem na propriedade 'url' (conforme documentação atual, costuma ser link_url ou apenas url)
+    const paymentUrl = result.url || result.link_url || (result.data && result.data.url) || (result.data && result.data.link_url);
+
+    if (!paymentUrl) {
+      console.error("URL não retornada pela InfinitePay:", result);
+      return NextResponse.json({ error: 'URL de pagamento não gerada' }, { status: 500 });
+    }
+
+    return NextResponse.json({ url: paymentUrl });
 
   } catch (error: any) {
-    console.error("Erro interno Checkout:", error);
-    return NextResponse.json({ error: 'Erro ao processar', details: error.message }, { status: 500 });
+    console.error("Erro no checkout:", error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
