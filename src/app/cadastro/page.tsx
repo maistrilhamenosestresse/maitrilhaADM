@@ -241,7 +241,7 @@ function CadastroContent() {
           }
           
           const reservaJson = await resReserva.json();
-          reservaIds = reservaJson.reservas.map(r => r.id);
+          reservaIds = reservaJson.reservas.map((r: any) => r.id);
         } else if (agendaId && savedClient) {
           // Fallback if accessed via direct URL instead of cart
           const resReserva = await fetch('/api/create-reserva', {
@@ -252,7 +252,7 @@ function CadastroContent() {
             })
           });
           const reservaJson = await resReserva.json();
-          reservaIds = reservaJson.reservas.map(r => r.id);
+          reservaIds = reservaJson.reservas.map((r: any) => r.id);
           totalItemsPrice = agenda?.price || 0;
           checkoutTitle = agenda?.title || 'Trilha';
         }
