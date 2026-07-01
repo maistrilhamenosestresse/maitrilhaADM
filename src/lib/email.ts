@@ -49,6 +49,14 @@ export async function sendPurchaseEmail(client: any, agenda: any) {
             </ul>
           </div>
 
+          <div style="background-color: #fff3ed; padding: 20px; border-left: 4px solid #F17B37; margin: 20px 0; border-radius: 4px;">
+            <h3 style="margin-top: 0; color: #d9682b; font-size: 16px;">⚠️ Atenção, finalize o cadastro do acompanhante.</h3>
+            <p style="margin-bottom: 0; font-size: 14px;">Se você comprou para outras pessoas, envie este link para que elas concluam o cadastro e aceitem os termos:</p>
+            <p style="margin-top: 10px; margin-bottom: 0;">
+              <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://maistrilhamenosestresse.com.br'}/cadastro" style="color: #F17B37; font-weight: bold; text-decoration: underline;">Link do cadastro</a>
+            </p>
+          </div>
+
           <h3 style="color: #113a5d; margin-top: 30px;">🎒 O que vestir e o que levar?</h3>
           <div style="background-color: #fff3ed; padding: 20px; border-radius: 8px; font-size: 14px;">
             <ul style="padding-left: 20px; line-height: 1.5;">

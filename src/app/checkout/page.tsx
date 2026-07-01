@@ -191,7 +191,7 @@ function CheckoutAuthContent() {
       const dependentCPFs: string[] = [];
       items.forEach(item => {
         item.dependents?.forEach(dep => {
-          if (dep.cpf) dependentCPFs.push(dep.cpf.replace(/[^\d]/g, '')); // Apenas nros para a URL
+          if (dep.cpf) dependentCPFs.push(dep.cpf); // Mantém a formatação para encontrar no banco depois
         });
       });
 
