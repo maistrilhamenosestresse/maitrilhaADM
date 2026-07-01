@@ -11,10 +11,16 @@ export async function POST(request: Request) {
   try {
     const data = await request.json();
 
-    // REMOVIDO: Log bruto do webhook (evita array e logs feios no painel admin)
-    // try {
-    //   await supabase.from('notificacoes').insert([{ ... }]);
-    // } catch (e) {}
+    // Log bruto do webhook para debugar o payload do Pix
+    try {
+      await supabase.from('notificacoes').insert([{ 
+        reserva_id: null,
+        mensagem: 'WEBHOOK RAW: ' + JSON.stringify(data).substring(0, 500),
+        lida: false
+      }]);
+    } catch (e) {
+      console.error("Erro ao salvar log bruto", e);
+    }
 
     const payloadInfo = data.payload || data.data || data;
 
