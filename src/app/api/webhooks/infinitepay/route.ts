@@ -100,7 +100,7 @@ export async function POST(request: Request) {
 
           // Disparar Email
           try {
-            await sendPurchaseEmail(resData.clients, resData.agendas, allRes);
+            await sendPurchaseEmail(resData.clients, resData.agendas, allRes || []);
           } catch (emailErr) {
              console.error("Erro ao enviar email de compra aprovada", emailErr);
           }
