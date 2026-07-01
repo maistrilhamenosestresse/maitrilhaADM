@@ -27,8 +27,14 @@ export async function POST(request: Request) {
       order_nsu 
     } = payloadInfo;
 
-    if (data.event && data.event !== 'payment_approved') {
-      console.log('Ignorando evento:', data.event);
+    const isApproved = 
+      (data.event && (data.event.includes('approve') || data.event.includes('paid'))) || 
+      payloadInfo.status === 'approved' || 
+      payloadInfo.status === 'paid' || 
+      (paid_amount && paid_amount > 0);
+
+    if (!isApproved) {
+      console.log('Ignorando evento não finalizado:', data.event, payloadInfo.status);
       return NextResponse.json({ success: true, message: 'Evento ignorado' }, { status: 200 });
     }
 
