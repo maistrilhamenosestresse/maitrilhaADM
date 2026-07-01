@@ -60,8 +60,9 @@ export function Navigation() {
 
           {/* Mobile Menu Toggle */}
           <button 
-            className="md:hidden text-white p-2 hover:bg-white/10 rounded-full transition-colors"
+            className="md:hidden flex items-center justify-center text-white bg-white/10 border border-white/20 p-2.5 rounded-xl hover:bg-[#F17B37] hover:border-[#F17B37] transition-all shadow-lg backdrop-blur-md"
             onClick={() => setIsMobileMenuOpen(true)}
+            aria-label="Abrir Menu"
           >
             <Menu className="w-6 h-6" />
           </button>
