@@ -55,6 +55,20 @@ export async function POST(request: Request) {
       reserva_ids = metadataReservas;
     } else if (final_order_nsu && !final_order_nsu.startsWith('PEDIDO-')) {
       reserva_ids = final_order_nsu.includes(',') ? final_order_nsu.split(',') : [final_order_nsu];
+    } else if (final_order_nsu && final_order_nsu.startsWith('PEDIDO-')) {
+      // Recupera o mapeamento salvo no checkout
+      const { data: notif } = await supabase.from('notificacoes')
+        .select('mensagem')
+        .like('mensagem', `CHECKOUT_MAPPING: ${final_order_nsu} -> %`)
+        .limit(1)
+        .single();
+        
+      if (notif && notif.mensagem) {
+        const idsString = notif.mensagem.split(' -> ')[1];
+        if (idsString) {
+          reserva_ids = idsString.split(',');
+        }
+      }
     }
 
     if (reserva_ids.length === 0) {

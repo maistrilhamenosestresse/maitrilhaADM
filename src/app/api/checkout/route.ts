@@ -1,4 +1,10 @@
 import { NextResponse } from 'next/server';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 export async function POST(request: Request) {
   try {
@@ -22,9 +28,20 @@ export async function POST(request: Request) {
     // A API do InfinitePay espera o handle sem o $
     const infiniteTag = "nivea-maria-7en";
     
-    // Para múltiplos IDs, enviamos tudo junto separado por vírgula no order_nsu 
-    // porque o webhook de PIX da InfinitePay não retorna o campo metadata!
-    const order_nsu = ids.join(',');
+    // Para evitar o limite de 50 caracteres da InfinitePay no order_nsu,
+    // geramos um ID de pedido curto e salvamos a relação de IDs na tabela notificacoes.
+    const shortOrderId = `PEDIDO-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+    const allIdsJoined = ids.join(',');
+
+    try {
+      await supabase.from('notificacoes').insert([{ 
+        reserva_id: null,
+        mensagem: `CHECKOUT_MAPPING: ${shortOrderId} -> ${allIdsJoined}`,
+        lida: false
+      }]);
+    } catch (e) {
+      console.error("Erro ao salvar mapping de checkout", e);
+    }
 
     const depsQuery = (dependentCPFs && dependentCPFs.length > 0) ? `&deps=${dependentCPFs.join(',')}` : '';
 
@@ -33,7 +50,7 @@ export async function POST(request: Request) {
       handle: infiniteTag,
       redirect_url: `${baseUrl}/sucesso?agenda_id=${agenda_id || ids[0]}${depsQuery}`,
       webhook_url: `${baseUrl}/api/webhooks/infinitepay`,
-      order_nsu: order_nsu,
+      order_nsu: shortOrderId,
       customer: customer,
       metadata: { reservas: ids },
       items: [
