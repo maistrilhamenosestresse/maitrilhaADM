@@ -66,7 +66,7 @@ export async function sendPurchaseEmail(client: any, agenda: any, allReservas: a
                   ${uniqueAcompanhantes.map(acomp => `
                     <li style="margin-bottom: 8px;">
                       <strong>${acomp.full_name}:</strong><br/>
-                      <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://maistrilhamenosestresse.com.br'}/cadastro?cpf=${acomp.cpf}" style="color: #F17B37; font-weight: bold; text-decoration: underline;">Link de conclusão de cadastro</a>
+                      <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.maistrilhasmenosestresse.com'}/cadastro?cpf=${acomp.cpf}" style="color: #F17B37; font-weight: bold; text-decoration: underline;">Link de conclusão de cadastro</a>
                     </li>
                   `).join('')}
                 </ul>
