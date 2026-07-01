@@ -1548,84 +1548,48 @@ export default function AdminPage() {
 
                               {/* Ranking dos Top Clientes */}
                               {(() => {
-                                  const today = new Date();
-                                  const isFirstSemester = today.getMonth() < 6;
-                                  const semStart = new Date(today.getFullYear(), isFirstSemester ? 0 : 6, 1);
-                                  const semEnd = new Date(today.getFullYear(), isFirstSemester ? 5 : 11, 31, 23, 59, 59);
-                                  
-                                  const isBirthdayClose = (birthDateString: string | undefined | null) => {
-                                    if (!birthDateString) return false;
-                                    const bDate = new Date(birthDateString);
-                                    bDate.setFullYear(today.getFullYear());
-                                    if (bDate < new Date(today.getFullYear(), today.getMonth(), today.getDate() - 1)) {
-                                      bDate.setFullYear(today.getFullYear() + 1);
+                                const clientRanking = allReservas.reduce((acc, curr) => {
+                                  if (curr.status_pagamento === 'pago' && curr.clients) {
+                                    if (!acc[curr.client_id]) {
+                                      acc[curr.client_id] = { name: curr.clients.full_name, count: 0 };
                                     }
-                                    const diffTime = Math.abs(bDate.getTime() - today.getTime());
-                                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                    return diffDays <= 1; // Hoje ou amanhã
-                                  };
+                                    acc[curr.client_id].count += 1;
+                                  }
+                                  return acc;
+                                }, {} as Record<string, { name: string, count: number }>);
+                                
+                                const topClients = Object.values(clientRanking)
+                                  .sort((a: any, b: any) => b.count - a.count)
+                                  .slice(0, 10);
+                                  
+                                if (topClients.length === 0) return null;
 
-                                  const clientRanking = allReservas.reduce((acc, curr) => {
-                                    if (curr.status_pagamento === 'pago' && curr.clients && curr.agendas?.date) {
-                                      const agendaDate = new Date(curr.agendas.date);
-                                      if (agendaDate >= semStart && agendaDate <= semEnd) {
-                                        if (!acc[curr.client_id]) {
-                                          acc[curr.client_id] = { 
-                                            name: curr.clients.full_name, 
-                                            photo: curr.clients.photo_url || '',
-                                            isBirthday: isBirthdayClose(curr.clients.birth_date),
-                                            count: 0 
-                                          };
-                                        }
-                                        acc[curr.client_id].count += 1;
-                                      }
-                                    }
-                                    return acc;
-                                  }, {} as Record<string, { name: string, photo: string, isBirthday: boolean, count: number }>);
-                                  
-                                  const topClients = Object.values(clientRanking)
-                                    .sort((a: any, b: any) => b.count - a.count)
-                                    .slice(0, 3);
-                                    
-                                  if (topClients.length === 0) return null;
-  
-                                  return (
-                                    <div className="bg-white p-5 rounded-2xl shadow-md border border-gray-100 mt-6 print:hidden relative overflow-hidden">
-                                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-400 via-amber-500 to-yellow-400"></div>
-                                      <h4 className="font-bold text-gray-800 mb-5 text-sm uppercase tracking-wide flex items-center gap-2">
-                                        <Trophy className="h-6 w-6 text-yellow-500" /> Ranking Top 3 Trilheiros ({isFirstSemester ? '1º' : '2º'} Semestre)
-                                      </h4>
-                                      <div className="space-y-3">
-                                        {topClients.map((client: any, index: number) => (
-                                          <div key={index} className={`flex items-center justify-between p-4 rounded-xl border ${client.isBirthday ? 'bg-gradient-to-r from-yellow-50 to-amber-50 border-yellow-300 shadow-[0_0_15px_rgba(252,211,77,0.4)]' : 'bg-gray-50 border-gray-100'}`}>
-                                            <div className="flex items-center gap-4">
-                                              <div className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-black shrink-0 shadow-md ${index === 0 ? 'bg-yellow-400 text-white' : index === 1 ? 'bg-gray-300 text-gray-800' : 'bg-orange-300 text-white'}`}>
-                                                #{index + 1}
-                                              </div>
-                                              <div className="w-12 h-12 rounded-full overflow-hidden border-2 border-white shadow-sm shrink-0 bg-gray-200 flex items-center justify-center">
-                                                {client.photo ? (
-                                                  <img src={client.photo} alt={client.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                  <User className="w-6 h-6 text-gray-400" />
-                                                )}
-                                              </div>
-                                              <div>
-                                                <p className={`text-sm font-bold flex items-center gap-2 ${client.isBirthday ? 'text-amber-700' : 'text-gray-900'}`}>
-                                                  {client.name} {client.isBirthday && <span className="text-xl animate-bounce" title="Aniversariante!">🎁</span>}
-                                                </p>
-                                                {client.isBirthday && <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wide flex items-center gap-1"><Gift className="w-3 h-3"/> Aniversariante!</p>}
-                                              </div>
+                                return (
+                                  <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 mt-4 print:hidden">
+                                    <h4 className="font-bold text-gray-800 mb-4 text-sm uppercase tracking-wide flex items-center gap-2">
+                                      <Users className="h-5 w-5 text-[#F17B37]" /> Ranking Top Trilheiros
+                                    </h4>
+                                    <div className="space-y-2">
+                                      {topClients.map((client: any, index: number) => (
+                                        <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                          <div className="flex items-center gap-3">
+                                            <div className="w-8 h-8 rounded-full bg-[#1D2A3A] text-white flex items-center justify-center text-xs font-black shrink-0 shadow-md">
+                                              #{index + 1}
                                             </div>
-                                            <div className={`flex items-center gap-1 px-4 py-2 rounded-xl border ${client.isBirthday ? 'bg-yellow-100 text-yellow-700 border-yellow-200' : 'bg-orange-100 text-[#F17B37] border-orange-200'}`}>
-                                              <span className="text-lg font-black">{client.count}</span>
-                                              <span className="text-xs font-bold uppercase">Trilhas</span>
+                                            <div>
+                                              <p className="text-sm font-bold text-gray-900">{client.name}</p>
                                             </div>
                                           </div>
-                                        ))}
-                                      </div>
+                                          <div className="flex items-center gap-1 bg-orange-100 text-[#F17B37] px-3 py-1 rounded-lg border border-orange-200">
+                                            <span className="text-sm font-black">{client.count}</span>
+                                            <span className="text-[10px] font-bold uppercase">Trilhas</span>
+                                          </div>
+                                        </div>
+                                      ))}
                                     </div>
-                                  );
-                                })()}
+                                  </div>
+                                );
+                              })()}
                             </>
                           );
                         })()}
