@@ -144,7 +144,7 @@ export default function SobrePage() {
                   <div className="order-1 md:order-2 relative">
                     <div className="absolute inset-0 bg-[#F17B37] blur-[100px] opacity-20 rounded-full" />
                     <img 
-                      src="/FotosEvideos/equipe/nivea_historia.webp" 
+                      src="/FotosEvideos/equipe/Nivea.jpeg" 
                       alt="Nívea Maria" 
                       className="relative z-10 w-full h-[600px] object-cover rounded-[2rem] shadow-2xl border-4 border-white/10 hover:border-[#F17B37]/50 transition-colors duration-500"
                     />
@@ -156,7 +156,7 @@ export default function SobrePage() {
                   <div className="relative">
                     <div className="absolute inset-0 bg-[#25D366] blur-[100px] opacity-10 rounded-full" />
                     <img 
-                      src="/FotosEvideos/equipe/palestino.webp" 
+                      src="/FotosEvideos/equipe/Palestino.jpeg" 
                       alt="Palestino" 
                       className="relative z-10 w-full h-[600px] object-cover rounded-[2rem] shadow-2xl border-4 border-white/10 hover:border-[#25D366]/50 transition-colors duration-500"
                     />
@@ -166,16 +166,10 @@ export default function SobrePage() {
                     <h3 className="text-[#F17B37] font-bold tracking-[0.2em] uppercase text-sm mb-8">Motorista Oficial</h3>
                     
                     <p>
-                      Conheci o Mais Trilha através do meu antigo trabalho, quando meu patrão fechou um frete com o grupo e me escalou para a viagem. Na primeira vez, confesso que fiquei tenso; não conhecia ninguém e a gente sempre fica um pouco receoso diante do desconhecido. Mas a recepção não poderia ter sido melhor: fui acolhido de braços abertos pela Nívea e por todos os clientes, que me incentivaram logo de cara a participar da caminhada com eles.
+                      Conheci o Mais Trilha através do meu antigo trabalho, quando fui escalado para um frete com o grupo. Fui tão bem acolhido por todos que, nas viagens seguintes, me tornei o motorista oficial. O que começou como uma simples prestação de serviço transformou-se em amizade, parceria e família.
                     </p>
                     <p>
-                      A sintonia foi tão grande que, nas trilhas seguintes, a Nívea fez questão de pedir ao meu patrão que eu fosse o motorista oficial. Com o tempo, o que começou como uma simples prestação de serviço transformou-se em algo muito maior. Hoje, o Mais Trilha é muito mais do que um trabalho para mim: é sinônimo de amizade, parceria e família.
-                    </p>
-                    <p>
-                      Essa jornada mudou completamente a minha vida. Eu vinha de uma rotina exaustiva e acelerada como caminhoneiro, rodando as estradas dia e noite. O contato com o ecoturismo me tirou do sedentarismo e me conectou profundamente com a natureza, onde o estresse e as preocupações frequentes simplesmente deixaram de existir. O grupo se tornou minha rede de apoio, sempre me motivando a cuidar da saúde e a evoluir como pessoa e profissional.
-                    </p>
-                    <p>
-                      Hoje, não me vejo sem o Mais Trilha. Tenho um carinho e um respeito enorme por cada participante, pois o caminho nos ensina diariamente a nossa maior lição: na trilha, ninguém solta a mão de ninguém e somos todos iguais.
+                      Essa jornada mudou completamente a minha vida. Eu vinha de uma rotina exaustiva nas estradas, e o ecoturismo me conectou profundamente com a natureza, onde o estresse e as preocupações ficaram para trás. O grupo se tornou minha rede de apoio, sempre me motivando a evoluir. Hoje, o Mais Trilha é parte de quem eu sou. Na trilha, ninguém solta a mão de ninguém e somos todos iguais.
                     </p>
                   </div>
                 </div>
