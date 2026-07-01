@@ -16,7 +16,7 @@ export const metadata: Metadata = {
   metadataBase: new URL('https://www.maistrilhasmenosestresse.com'),
   title: "Mais Trilha Menos Estresse » Ecoturismo, Trilhas e Bate-Volta",
   description: "Conheça um pouco da nossa história. Somos uma comunidade apaixonada pela natureza, aventura e bem-estar. Venha se desconectar do estresse e se reconectar com a vida através de trilhas incríveis!",
-  keywords: ["Mais Trilha", "Mais Trilhas", "Mais Trilha, menos estresse", "Mais Trilhas, menos estresse", "Mais Trilha Menos Estresse", "Ecoturismo", "Trilhas", "Trekking", "Aventura", "Bate-Volta", "Viagens", "Natureza"],
+  keywords: ["Mais Trilha", "Mais Trilha, menos estresse", "Mais Trilha Menos Estresse", "Ecoturismo", "Trilhas", "Trekking", "Aventura", "Bate-Volta", "Viagens", "Natureza"],
   openGraph: {
     title: "Mais Trilha Menos Estresse",
     description: "Conheça um pouco da nossa história. Somos uma comunidade apaixonada pela natureza, aventura e bem-estar. Venha se desconectar do estresse e se reconectar com a vida através de trilhas incríveis!",
@@ -73,8 +73,6 @@ export default function RootLayout({
               "name": "Mais Trilha Menos Estresse",
               "alternateName": [
                 "Mais Trilha",
-                "Mais Trilhas",
-                "Mais Trilhas, menos estresse",
                 "Mais Trilha, menos estresse",
                 "MaisTrilha"
               ],

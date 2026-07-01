@@ -126,7 +126,7 @@ export default function SobrePage() {
                     <h3 className="text-[#F17B37] font-bold tracking-[0.2em] uppercase text-sm mb-8">Guia e Fundadora</h3>
                     
                     <p>
-                      Me chamo Nívea Magalhães, tenho 35 anos e, há três, o ecoturismo transformou a minha vida. Minha conexão com a natureza vem de berço: sempre amei o simples, o essencial, e é nela que me sinto verdadeiramente em casa.
+                      Me chamo Nívea Maria, tenho 35 anos e, há três, o ecoturismo transformou a minha vida. Minha conexão com a natureza vem de berço: sempre amei o simples, o essencial, e é nela que me sinto verdadeiramente em casa.
                     </p>
                     <p>
                       Cresci vendo meu tio desbravar trilhas e escalar montanhas. Eu ajudava a arrumar a mochila dele fascinada por aquele universo, mas, por muito tempo, sufoquei esse sonho. Acreditava que aquela vida não era para mim — que não era o lugar de uma mulher, mãe e casada, aos 32 anos.
