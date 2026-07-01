@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
     }
 
-    const ids = reserva_ids || (reserva_id ? [reserva_id] : []);
+    const ids = reserva_ids || (reserva_id ? (reserva_id.includes(',') ? reserva_id.split(',') : [reserva_id]) : []);
 
     if (ids.length === 0 || !price) {
       return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });

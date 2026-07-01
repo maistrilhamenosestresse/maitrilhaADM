@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     if (Array.isArray(metadataReservas) && metadataReservas.length > 0) {
       reserva_ids = metadataReservas;
     } else if (final_order_nsu && !final_order_nsu.startsWith('PEDIDO-')) {
-      reserva_ids = [final_order_nsu];
+      reserva_ids = final_order_nsu.includes(',') ? final_order_nsu.split(',') : [final_order_nsu];
     }
 
     if (reserva_ids.length === 0) {
