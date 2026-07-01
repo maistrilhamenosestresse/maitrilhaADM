@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { reserva_id, reserva_ids, agenda_id, agenda_title, price, customer } = await request.json();
+    const { reserva_id, reserva_ids, agenda_id, agenda_title, price, customer, dependentCPFs } = await request.json();
 
     const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || 'localhost:3000';
     const protocol = request.headers.get('x-forwarded-proto') || (host.includes('localhost') ? 'http' : 'https');
@@ -25,10 +25,12 @@ export async function POST(request: Request) {
     // Para múltiplos IDs, geramos um order_nsu customizado e armazenamos os reais no metadata
     const order_nsu = ids.length === 1 ? ids[0] : `PEDIDO-${Date.now()}`;
 
+    const depsQuery = (dependentCPFs && dependentCPFs.length > 0) ? `&deps=${dependentCPFs.join(',')}` : '';
+
     // Montando a requisição para a InfinitePay
     const payload = {
       handle: infiniteTag,
-      redirect_url: `${baseUrl}/sucesso?agenda_id=${agenda_id || ids[0]}`,
+      redirect_url: `${baseUrl}/sucesso?agenda_id=${agenda_id || ids[0]}${depsQuery}`,
       webhook_url: `${baseUrl}/api/webhooks/infinitepay`,
       order_nsu: order_nsu,
       customer: customer,

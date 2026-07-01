@@ -34,6 +34,7 @@ function CadastroContent() {
   const totalSteps = 4;
 
   const initialEmail = searchParams.get('email') || "";
+  const initialCpf = searchParams.get('cpf') || "";
   const [agenda, setAgenda] = useState<any>(null);
 
   useEffect(() => {
@@ -43,6 +44,26 @@ function CadastroContent() {
       });
     }
   }, [agendaId]);
+
+  useEffect(() => {
+    if (initialCpf) {
+      supabase.from('clients').select('*').eq('cpf', initialCpf).single().then(({data}) => {
+        if (data) {
+          setFormData(prev => ({
+            ...prev,
+            full_name: data.full_name || prev.full_name,
+            email: data.email || prev.email,
+            rg: data.rg || prev.rg,
+            birth_date: data.birth_date || prev.birth_date,
+            phone: data.phone || prev.phone,
+            emergency_contact_name: data.emergency_contact_name || prev.emergency_contact_name,
+            emergency_contact_phone: data.emergency_contact_phone || prev.emergency_contact_phone,
+            health_notes: data.health_notes || prev.health_notes
+          }));
+        }
+      });
+    }
+  }, [initialCpf]);
   
   const sigCanvas = useRef<SignatureCanvas>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -52,7 +73,7 @@ function CadastroContent() {
   const [formData, setFormData] = useState({
     full_name: "",
     email: initialEmail,
-    cpf: "",
+    cpf: initialCpf,
     rg: "",
     birth_date: "",
     phone: "",
@@ -464,9 +485,10 @@ function CadastroContent() {
                   <input 
                     type="text" 
                     required
+                    disabled={!!initialCpf}
                     value={formData.cpf}
                     onChange={e => setFormData({...formData, cpf: formatCPF(e.target.value)})}
-                    className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-[#F17B37] outline-none transition-all placeholder-gray-600" 
+                    className="w-full p-4 bg-white/5 border border-white/10 rounded-2xl focus:ring-2 focus:ring-[#F17B37] outline-none transition-all placeholder-gray-600 disabled:opacity-50 disabled:cursor-not-allowed" 
                     placeholder="000.000.000-00"
                   />
                 </div>

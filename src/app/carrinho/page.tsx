@@ -4,16 +4,36 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { useCartStore } from "@/store/cartStore";
 import { useRouter } from "next/navigation";
-import { ShoppingCart, Trash2, ChevronLeft, ChevronRight, ShieldCheck, MapPin, Users } from "lucide-react";
+import { ShoppingCart, Trash2, ChevronLeft, ChevronRight, ShieldCheck, MapPin, Users, Loader2 } from "lucide-react";
+import { supabase } from "@/lib/supabase";
 
 export default function CarrinhoPage() {
   const router = useRouter();
   const { items, updateQuantity, removeItem, updateDependent, getTotalPrice, getTotalQuantity } = useCartStore();
   const [mounted, setMounted] = useState(false);
+  const [loadingDep, setLoadingDep] = useState<string | null>(null); // Armazena a chave agendaId-idx para mostrar spinner
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  const handleCpfChange = async (agendaId: string, idx: number, val: string) => {
+    const formatted = formatCPF(val);
+    updateDependent(agendaId, idx, 'cpf', formatted);
+
+    if (formatted.length === 14) {
+      setLoadingDep(`${agendaId}-${idx}`);
+      try {
+        const { data } = await supabase.from('clients').select('full_name').eq('cpf', formatted).single();
+        if (data && data.full_name) {
+          updateDependent(agendaId, idx, 'name', data.full_name);
+        }
+      } catch (err) {
+        // Ignora erro se no existir
+      }
+      setLoadingDep(null);
+    }
+  };
 
   if (!mounted) return null;
 
@@ -127,16 +147,19 @@ export default function CarrinhoPage() {
                             className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-[#F17B37] outline-none text-sm transition"
                           />
                         </div>
-                        <div className="flex-1">
+                        <div className="flex-1 relative">
                           <label className="block text-xs font-bold text-gray-400 mb-1">CPF (Acompanhante {idx + 1})</label>
                           <input 
                             type="text" 
                             value={dep.cpf}
                             maxLength={14}
-                            onChange={(e) => updateDependent(item.agendaId, idx, 'cpf', formatCPF(e.target.value))}
+                            onChange={(e) => handleCpfChange(item.agendaId, idx, e.target.value)}
                             placeholder="000.000.000-00"
                             className="w-full p-3 bg-white/5 border border-white/10 rounded-xl focus:ring-2 focus:ring-[#F17B37] outline-none text-sm transition"
                           />
+                          {loadingDep === `${item.agendaId}-${idx}` && (
+                            <Loader2 className="absolute right-3 top-9 h-4 w-4 animate-spin text-[#F17B37]" />
+                          )}
                         </div>
                       </div>
                     ))}

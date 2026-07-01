@@ -5,13 +5,16 @@ import { motion } from "framer-motion";
 import { CheckCircle2, ChevronRight, Mail, Map, Calendar, ShieldCheck } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { Copy } from "lucide-react";
 import { Suspense } from "react";
 
 function SucessoContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const agendaId = searchParams.get('agenda_id');
+  const depsParam = searchParams.get('deps');
   const [agenda, setAgenda] = useState<any>(null);
+  const [dependents, setDependents] = useState<any[]>([]);
 
   useEffect(() => {
     if (agendaId) {
@@ -20,6 +23,21 @@ function SucessoContent() {
       });
     }
   }, [agendaId]);
+
+  useEffect(() => {
+    if (depsParam) {
+      const cpfs = depsParam.split(',');
+      supabase.from('clients').select('id, full_name, cpf').in('cpf', cpfs).then(({data}) => {
+        if (data) setDependents(data);
+      });
+    }
+  }, [depsParam]);
+
+  const copyLink = (cpf: string) => {
+    const link = `${window.location.origin}/cadastro?cpf=${cpf}`;
+    navigator.clipboard.writeText(link);
+    alert('Link copiado!');
+  };
 
   return (
     <div className="min-h-screen bg-[#0F1722] text-white font-sans flex flex-col items-center justify-center relative overflow-hidden p-6">
@@ -95,6 +113,28 @@ function SucessoContent() {
                 </div>
               )}
             </div>
+
+            {dependents.length > 0 && (
+              <div className="bg-orange-500/10 rounded-2xl p-5 mb-8 text-left border border-orange-500/20 shadow-inner">
+                <h3 className="font-bold text-orange-400 mb-2">Atenção: Acompanhantes</h3>
+                <p className="text-sm text-gray-300 mb-4">
+                  Envie o link abaixo para seus dependentes finalizarem o cadastro e assinarem o contrato:
+                </p>
+                <div className="space-y-3">
+                  {dependents.map((dep, i) => (
+                    <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-black/20 p-3 rounded-xl border border-white/5">
+                      <span className="font-medium text-sm text-gray-300 truncate">{dep.full_name}</span>
+                      <button 
+                        onClick={() => copyLink(dep.cpf)}
+                        className="bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition"
+                      >
+                        <Copy className="h-3 w-3" /> Copiar Link
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <button 
               onClick={() => router.push('/agenda')}

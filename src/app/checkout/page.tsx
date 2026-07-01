@@ -187,6 +187,13 @@ function CheckoutAuthContent() {
       
       const totalItemsPrice = getTotalPrice();
       const checkoutTitle = items.length === 1 ? items[0].title : 'Combo Trilha';
+      
+      const dependentCPFs: string[] = [];
+      items.forEach(item => {
+        item.dependents?.forEach(dep => {
+          if (dep.cpf) dependentCPFs.push(dep.cpf.replace(/[^\d]/g, '')); // Apenas nros para a URL
+        });
+      });
 
       // Chama a API da InfinitePay
       const reqCheckout = await fetch('/api/checkout', {
@@ -201,7 +208,8 @@ function CheckoutAuthContent() {
             name: clientData.full_name,
             email: clientData.email,
             phone_number: clientData.phone
-          }
+          },
+          dependentCPFs
         })
       });
       const resCheckout = await reqCheckout.json();
