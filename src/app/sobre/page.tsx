@@ -74,14 +74,18 @@ export default function SobrePage() {
                     />
                   </div>
                   <div className="space-y-6 text-lg text-gray-300 leading-relaxed">
-                    <h2 className="text-4xl font-black text-white mb-8">Muito mais que trilhas</h2>
+                    <h2 className="text-4xl font-black text-white mb-8">Sobre Nós</h2>
                     <p>
-                      Nossa missão sempre foi clara: proporcionar momentos inesquecíveis longe do caos da cidade. 
-                      Acreditamos no poder curativo da natureza e em como caminhar ao ar livre pode transformar vidas, reduzindo a ansiedade e trazendo mais clareza mental.
+                      O Mais Trilha Menos Estresse nasceu de um propósito maior: guiar pessoas até lugares incríveis e transformar a vida de cada uma delas pelo caminho. Nós somos muito mais do que um grupo de trilhas ou uma agência de turismo; somos uma empresa dedicada ao seu bem-estar, onde a natureza é o nosso principal refúgio.
                     </p>
                     <p>
-                      Cada expedição é cuidadosamente planejada para garantir segurança, diversão e, acima de tudo, acolhimento. 
-                      Ninguém fica para trás. Quando você viaja com o Mais Trilha, você ganha amigos para a vida toda.
+                      Acreditamos profundamente que o mundo foi feito para ser explorado por absolutamente todos. Aqui, cada passo é uma vitória e cada caminhada é uma chance de superar os próprios limites. O Mais Trilha foi feito para quem acredita na própria força: crianças, jovens, adultos e as nossas queridas “pessoas com experiência de vida” (afinal, a alma aventureira não tem idade e nós preferimos colecionar momentos a usar rótulos!).
+                    </p>
+                    <p>
+                      Nossa maior conquista não são apenas os quilômetros que percorremos, mas a comunidade que criamos. Construímos uma verdadeira família, um lugar seguro onde nos apoiamos mutuamente, celebramos cada conquista e vivemos experiências que ficam marcadas para sempre no coração.
+                    </p>
+                    <p>
+                      Essa é a nossa essência. Essa é a ideologia do Mais Trilha Menos Estresse: colecionar memórias, superar desafios e viver o melhor da vida, juntos.
                     </p>
                   </div>
                 </div>
