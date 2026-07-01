@@ -60,7 +60,7 @@ export function Navigation() {
 
           {/* Mobile Menu Toggle */}
           <button 
-            className="md:hidden flex items-center justify-center text-white bg-white/10 border border-white/20 p-2.5 rounded-xl hover:bg-[#F17B37] hover:border-[#F17B37] transition-all shadow-lg backdrop-blur-md"
+            className="md:hidden flex items-center justify-center text-white bg-[#F17B37] hover:bg-[#e06925] p-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(241,123,55,0.4)]"
             onClick={() => setIsMobileMenuOpen(true)}
             aria-label="Abrir Menu"
           >
